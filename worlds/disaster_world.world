@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="disaster_world">
+    <!-- Use GPU-accelerated physics -->
+    <physics type="dart" default="0">
+      <gravity>0 0 -9.8</gravity>
+      <real_time_update_rate>1000</real_time_update_rate>
+      <max_step_size>0.005</max_step_size>
+      <max_contacts>20</max_contacts>
+      <solver>
+        <iters>50</iters>
+      </solver>
+    </physics>
+
+    <!-- Include ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+
+    <!-- Include a simplified sun -->
+    <include>
+      <uri>model://sun</uri>
+      <pose>0 0 10 0 0 -1.57</pose>
+    </include>
+
+    <!-- Disaster site, spread out models -->
+    <include>
+      <uri>model://cafe</uri>
+      <pose>10 20 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://collapsed_house</uri>
+      <pose>40 40 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://construction_barrel</uri>
+      <pose>60 15 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://collapsed_industrial</uri>
+      <pose>80 60 0 0 0 0</pose>
+    </include>
+
+    <!-- Vehicles in the disaster area -->
+    <include>
+      <uri>model://ambulance</uri>
+      <pose>15 45 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://construction_cone</uri>
+      <pose>25 70 0 0 0 0</pose>
+    </include>
+
+    <!-- Add a robot model -->
+    <include>
+      <uri>model://pioneer2dx</uri>
+      <pose>5 5 0 0 0 0</pose>
+      <name>pioneer2dx</name>
+    </include>
+
+    <!-- Add a single light source without shadows -->
+    <light name="simple_light" type="directional">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1.0</diffuse>
+      <specular>0.2 0.2 0.2 1.0</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.5 -1</direction>
+    </light>
+  </world>
+</sdf>
