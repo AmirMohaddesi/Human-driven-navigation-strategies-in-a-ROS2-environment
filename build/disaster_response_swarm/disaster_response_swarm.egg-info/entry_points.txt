@@ -1,0 +1,4 @@
+[console_scripts]
+image_processor = disaster_response_swarm.vision.image_processor:main
+yolo_detection_node = disaster_response_swarm.vision.yolo_detection_node:main
+

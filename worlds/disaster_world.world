@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.6">
   <world name="disaster_world">
-    <!-- Use GPU-accelerated physics -->
     <physics type="dart" default="0">
       <gravity>0 0 -9.8</gravity>
       <real_time_update_rate>1000</real_time_update_rate>
@@ -12,19 +11,16 @@
       </solver>
     </physics>
 
-    <!-- Include ground plane -->
     <include>
       <uri>model://ground_plane</uri>
       <pose>0 0 0 0 0 0</pose>
     </include>
 
-    <!-- Include a simplified sun -->
     <include>
       <uri>model://sun</uri>
       <pose>0 0 10 0 0 -1.57</pose>
     </include>
 
-    <!-- Disaster site, spread out models -->
     <include>
       <uri>model://cafe</uri>
       <pose>10 20 0 0 0 0</pose>
@@ -45,7 +41,6 @@
       <pose>80 60 0 0 0 0</pose>
     </include>
 
-    <!-- Vehicles in the disaster area -->
     <include>
       <uri>model://ambulance</uri>
       <pose>15 45 0 0 0 0</pose>
@@ -56,14 +51,24 @@
       <pose>25 70 0 0 0 0</pose>
     </include>
 
-    <!-- Add a robot model -->
     <include>
       <uri>model://pioneer2dx</uri>
       <pose>5 5 0 0 0 0</pose>
       <name>pioneer2dx</name>
     </include>
 
-    <!-- Add a single light source without shadows -->
+    <include>
+      <uri>model://turtlebot3_burger</uri>
+      <pose>0 10 0 0 0 0</pose>
+      <name>turtlebot3_burger_1</name>
+    </include>
+
+    <include>
+      <uri>model://turtlebot3_burger</uri>
+      <pose>0 -10 0 0 0 0</pose>
+      <name>turtlebot3_burger_2</name>
+    </include>
+
     <light name="simple_light" type="directional">
       <cast_shadows>false</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
