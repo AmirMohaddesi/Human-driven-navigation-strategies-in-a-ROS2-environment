@@ -1,0 +1,9 @@
+source;share/disaster_response_swarm/hook/pythonpath.ps1
+source;share/disaster_response_swarm/hook/pythonpath.dsv
+source;share/disaster_response_swarm/hook/pythonpath.sh
+source;share/disaster_response_swarm/hook/ament_prefix_path.ps1
+source;share/disaster_response_swarm/hook/ament_prefix_path.dsv
+source;share/disaster_response_swarm/hook/ament_prefix_path.sh
+source;../../build/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath_develop.ps1
+source;../../build/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath_develop.dsv
+source;../../build/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath_develop.sh

@@ -27,14 +27,19 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(gazebo_ros_pkg_dir, 'launch', 'gzclient.launch.py'))
     )
 
+    # Ensure consistent instance of Robot Specification
+    robot_name = 'turtlebot3_waffle_pi'
+    namespace = 'robot1'
+    x_pos = '0.0'  # Initial position
+
     # Robot spawn command
     spawn_entity_cmd = ExecuteProcess(
         cmd=[
             'ros2', 'run', 'gazebo_ros', 'spawn_entity.py',
             '-file', sdf_file,
-            '-entity', 'turtlebot3_waffle_pi',
-            '-x', '0.0', '-y', '0.0', '-z', '0.01',
-            '-robot_namespace', 'robot1'
+            '-entity', robot_name,
+            '-x', x_pos, '-y', '0.0', '-z', '0.01',
+            '-robot_namespace', namespace
         ],
         output='screen'
     )
@@ -50,32 +55,48 @@ def generate_launch_description():
     )
 
     # Use simulation time for all nodes
-    use_sim_time = {'use_sim_time': 'true'}
+    use_sim_time_param = True
 
     # RTAB-Map launch as Node
     rtabmap_cmd = Node(
         package='rtabmap_slam',
         executable='rtabmap',
         output='screen',
+        namespace=namespace,
         parameters=[{
             'frame_id': 'base_link',       # Robot's base frame
             'odom_frame_id': 'odom',       # Odometry frame
             'map_frame_id': 'map',         # Map frame
             'subscribe_depth': False,      # Assume RGB-D camera for simplicity
             'subscribe_rgb': True,
-            'use_sim_time': use_sim_time
+            'use_sim_time': use_sim_time_param  # Actual boolean
         }],
         remappings=[
-            ('rgb/image', '/robot1/camera/rgb/image_raw'),
-            ('rgb/camera_info', '/robot1/camera/rgb/camera_info'),
-            ('odom', '/robot1/odom')       # Ensure odom frame is correctly subscribed to
+            ('rgb/image', f'/{namespace}/camera/rgb/image_raw'),
+            ('rgb/camera_info', f'/{namespace}/camera/rgb/camera_info'),
+            ('odom', f'/{namespace}/odom')  # Ensure odom frame is correctly subscribed to
         ]
+    )
+
+    # Nav2 launch as Node
+    nav2_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')),
+        launch_arguments={
+            'namespace': namespace,
+            'use_namespace': 'true',   # Passed as strings
+            'slam': 'false',           # Passed as strings
+            'map': '',
+            'use_sim_time': 'true',    # Passed as strings
+            'params_file': os.path.join(disaster_pkg_dir, 'params', 'navigation2_params.yaml'),
+            'autostart': 'true'        # Passed as strings
+        }.items()
     )
 
     return LaunchDescription([
         gzserver_cmd,
-        gzclient_cmd,  # Comment out if not necessary to save resources
+        # gzclient_cmd,  # Comment out if not necessary to save resources
         spawn_entity_cmd,
         rviz_node,
-        rtabmap_cmd
+        rtabmap_cmd,
+        nav2_cmd
     ])

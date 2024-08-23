@@ -1,0 +1,14 @@
+rtabmap:
+  ros__parameters:
+    frame_id: "base_link"
+    odom_frame_id: "odom"
+    map_frame_id: "map"
+    subscribe_depth: False
+    subscribe_rgb: True
+    rgb_topic: "/robot1/camera/image_raw"
+    camera_info_topic: "/robot1/camera/camera_info"
+    approx_sync: True
+    use_sim_time: True
+    queue_size: 10
+    subscribe_odom_info: True
+    odom_topic: "/robot1/odom"
