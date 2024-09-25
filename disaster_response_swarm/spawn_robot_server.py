@@ -79,7 +79,7 @@ def main():
         node.get_logger().info("...connected!")
     
     urdf_file_path = args.robot_urdf
-    print('aaaaaaaaaaaaaaaaaaaa '+ str(unknown))
+    print('aaaaaaaaaaaaaaaaaaaa '+ str(urdf_file_path))
 
     # Set data for request
     request = SpawnEntity.Request()
@@ -99,7 +99,7 @@ def main():
         raise RuntimeError(
             'exception while calling service: %r' % future.exception())
 
-    node.get_logger().info("Done! Shutting down node.")
+    node.get_logger().info("Done! [Shutting] down node.")
     node.destroy_node()
     rclpy.shutdown()
 

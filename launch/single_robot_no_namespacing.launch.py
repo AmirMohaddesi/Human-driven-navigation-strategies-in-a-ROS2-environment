@@ -21,12 +21,6 @@ def generate_launch_description():
     TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
     model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
     
-    
-    # Set the TURTLEBOT3_MODEL environment variable to 'waffle'
-    # TURTLEBOT3_MODEL = 'waffle'
-    # setup_environment = SetEnvironmentVariable(name='TURTLEBOT3_MODEL', value=TURTLEBOT3_MODEL)
-
-
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
     gazebo_ros_pkg_dir = get_package_share_directory('gazebo_ros')
@@ -52,7 +46,7 @@ def generate_launch_description():
     nav2_yaml_file = os.path.join(
         disaster_pkg_dir,
         'config',
-        'nav2_params.yaml'
+        'nav2_multirobot_params_all.yaml'
     )
 
     slam_yaml_file = os.path.join(
@@ -63,45 +57,12 @@ def generate_launch_description():
 
     print("urdf_file_path : {}".format(urdf_file_path))
 
-    # turtlebot3_model_path = os.path.join(
-    #     turtlebot3_gazebo_dir,
-    #     'urdf',
-    #     urdf_file_name)
 
     with open(urdf_file_path, 'r') as infp:
         robot_desc = infp.read()
 
     rsp_params = {'robot_description': robot_desc}
-    # Include the robot1 interface launch file
-    # turtlebot3_bringup_cmd1 = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(os.path.join(disaster_pkg_dir, 'launch', 'tb3_bringup.launch.py')),
-    #     launch_arguments={
-    #         'use_sim_time': 'True'
-    #         # 'robot_namespace': 'robot1'
-    #     }.items()
-    # )
 
-    # # Include the robot2 interface launch file
-    # turtlebot3_bringup_cmd2 = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(os.path.join(disaster_pkg_dir, 'launch', 'tb3_bringup.launch.py')),
-    #     launch_arguments={
-    #         'use_sim_time': 'True',
-    #         # 'robot_namespace': 'robot2'
-    #     }.items()
-    # )
-
-    # # Robot spawn command with model path
-    # spawn_entity_cmd1 = ExecuteProcess(
-    #     cmd=[
-    #         'ros2', 'run', 'turtlebot3_bringup', 'robot_launch.py',
-    #         '-urdf', turtlebot3_model_path,
-    #         '-n', 'robot1',
-    #         '-ns', 'robot1_ns',
-    #         # '-namespace', 'true',
-    #         '-x', '0.0', '-y', '0.0', '-z', '0.01'
-    #     ],
-    #     output='screen'
-    # )
 
     gzserver_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(gazebo_ros_pkg_dir, 'launch', 'gzserver.launch.py')),
@@ -122,7 +83,7 @@ def generate_launch_description():
             '-urdf', sdf_file_path,
             '-n', 'robot1',
             '-ns', 'robot1_ns',
-            '-namespace', 'false',
+            '-namespace', 'true',
             # '-use_sim_time', 'True',
             '-x', '3.0', '-y', '3.0', '-z', '0.01'
         ],
@@ -199,40 +160,22 @@ def generate_launch_description():
         ]
     )
 
-    # Robot spawn command with model path
-    spawn_entity_cmd2 = ExecuteProcess(
-        cmd=[
-            'ros2', 'run', 'disaster_response_swarm', 'spawn_robot_server',
-            '-urdf', urdf_file_path,
-            '-n', 'robot2',
-            '-ns', 'robot2_ns',
-            '-namespace', 'true',
-            '-x', '-3.0', '-y', '-3.0', '-z', '0.01'
-        ],
-        output='screen'
-    )
-
-    # Robot state publisher with the model description
-    rsp_cmd2 = Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher',
-            namespace='robot2_ns',
-            output='screen',
-            parameters=[rsp_params, {'use_sim_time': use_sim_time}])
-
     # Include Navigation2 launch file without AMCL and map server
     turtlebot_nav2_prefix = PathJoinSubstitution([
-        get_package_share_directory('turtlebot3_navigation2'), 'launch', 'navigation2.launch.py'])
+        get_package_share_directory('nav2_bringup'), 'launch', 'tb3_simulation_launch.py'])
     
 
     navigation2 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([turtlebot_nav2_prefix]),
         launch_arguments={
-            'use_sim_time': use_sim_time,
-            'map' : 'maps/map.yaml',
             # 'slam': 'True',
-            'params_file' : nav2_yaml_file
+            # 'namespace': 'robot1_ns',
+            # 'use_namespace': 'True',
+            'map' : 'maps/map.yaml',
+            'use_sim_time': use_sim_time,
+            'params_file' : nav2_yaml_file,
+            # 'use_composition': 'True',
+            'use_respawn': 'True'
         }.items()
     )
 
@@ -254,23 +197,16 @@ def generate_launch_description():
         gzclient_cmd,
         # spawn_entity_cmd1,
         # rsp_cmd1,
-        # static_transform_publisher_1,
-        # static_transform_publisher_2,
-        # static_transform_publisher_3,
-        # static_transform_publisher_4,
-        GroupAction([
-            PushRosNamespace('robot1_ns'),
-            spawn_entity_cmd1,
-            rsp_cmd1,
-            static_transform_publisher_1,
-            static_transform_publisher_2,
-            static_transform_publisher_3,
-            static_transform_publisher_4,
+        # GroupAction([
+        #     PushRosNamespace('robot1_ns'),
+            # rsp_cmd1
+        static_transform_publisher_1,
+        static_transform_publisher_2,
+        static_transform_publisher_3,
+        static_transform_publisher_4,
             # navigation2,
             # slam
-        ]),
-        # spawn_entity_cmd2,
-        # rsp_cmd2,
+        # ]),
         navigation2,
         slam
     ])
