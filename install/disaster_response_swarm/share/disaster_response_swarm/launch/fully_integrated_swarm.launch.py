@@ -1,1 +1,0 @@
-/home/hsr/disaster_response_swarm/build/disaster_response_swarm/launch/fully_integrated_swarm.launch.py

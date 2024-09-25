@@ -1,1 +1,0 @@
-/home/hsr/disaster_response_swarm/launch/minimal_gazebo.launch.py

@@ -1,4 +1,4 @@
 .drs_key
 .drs_key.pub
-install
-build
+install/
+build/

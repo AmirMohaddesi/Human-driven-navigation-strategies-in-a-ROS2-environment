@@ -1,1 +1,0 @@
-/home/hsr/disaster_response_swarm/launch/turtlebot3_state_publisher.launch.py
