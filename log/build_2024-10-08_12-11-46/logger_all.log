@@ -1,0 +1,102 @@
+[0.372s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--symlink-install']
+[0.372s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=True, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=4, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0x7d8e69aecf70>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x7d8e69aec550>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x7d8e69aec550>>, mixin_verb=('build',))
+[0.905s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.906s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.906s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.906s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.906s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.906s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.906s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/hsr/disaster_response_swarm'
+[0.906s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.906s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.906s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.906s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.906s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.906s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.906s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.907s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.907s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.928s] DEBUG:colcon.colcon_core.package_identification:Package '.' with type 'ros.ament_python' and name 'disaster_response_swarm'
+[0.928s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.928s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.928s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.928s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.928s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.999s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[0.999s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[1.000s] WARNING:colcon.colcon_core.prefix_path.colcon:The path '/home/hsr/merge_map/install' in the environment variable COLCON_PREFIX_PATH doesn't exist
+[1.001s] WARNING:colcon.colcon_ros.prefix_path.ament:The path '/home/hsr/merge_map/install/merge_map' in the environment variable AMENT_PREFIX_PATH doesn't exist
+[1.001s] WARNING:colcon.colcon_ros.prefix_path.ament:The path '/home/hsr/disaster_response_swarm/install/disaster_response_swarm' in the environment variable AMENT_PREFIX_PATH doesn't exist
+[1.022s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 0 installed packages in /home/hsr/disaster_response_swarm/install
+[1.023s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 10 installed packages in /home/hsr/turtlebot3_ws/install
+[1.024s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 3 installed packages in /home/hsr/ros2_ws/install
+[1.025s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 4 installed packages in /home/hsr/realsense_ws/install
+[1.040s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 345 installed packages in /home/hsr/ros2_humble/install
+[1.044s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/hsr/axperiment/install
+[1.045s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 259 installed packages in /opt/ros/humble
+[1.059s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'cmake_args' from command line to 'None'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'cmake_target' from command line to 'None'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'cmake_clean_cache' from command line to 'False'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'cmake_clean_first' from command line to 'False'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'cmake_force_configure' from command line to 'False'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'ament_cmake_args' from command line to 'None'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'catkin_cmake_args' from command line to 'None'
+[1.162s] Level 5:colcon.colcon_core.verb:set package 'disaster_response_swarm' build argument 'catkin_skip_building_tests' from command line to 'False'
+[1.162s] DEBUG:colcon.colcon_core.verb:Building package 'disaster_response_swarm' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/hsr/disaster_response_swarm/build/disaster_response_swarm', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/hsr/disaster_response_swarm/install/disaster_response_swarm', 'merge_install': False, 'path': '/home/hsr/disaster_response_swarm', 'symlink_install': True, 'test_result_base': None}
+[1.163s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[1.165s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[1.165s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/hsr/disaster_response_swarm' with build type 'ament_python'
+[1.166s] Level 1:colcon.colcon_core.shell:create_environment_hook('disaster_response_swarm', 'ament_prefix_path')
+[1.176s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[1.176s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/hook/ament_prefix_path.ps1'
+[1.177s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/hook/ament_prefix_path.dsv'
+[1.178s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/hook/ament_prefix_path.sh'
+[1.179s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[1.179s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.261s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/hsr/disaster_response_swarm'
+[2.262s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.262s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[3.592s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/hsr/disaster_response_swarm/build/disaster_response_swarm': PYTHONPATH=/home/hsr/disaster_response_swarm/build/disaster_response_swarm/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/hsr/disaster_response_swarm/build/disaster_response_swarm/build --no-deps symlink_data
+[5.477s] Level 1:colcon.colcon_core.shell:create_environment_hook('disaster_response_swarm', 'pythonpath_develop')
+[5.478s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/hsr/disaster_response_swarm/build/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath_develop.ps1'
+[5.479s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/hsr/disaster_response_swarm/build/disaster_response_swarm' returned '0': PYTHONPATH=/home/hsr/disaster_response_swarm/build/disaster_response_swarm/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/hsr/disaster_response_swarm/build/disaster_response_swarm/build --no-deps symlink_data
+[5.479s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/hsr/disaster_response_swarm/build/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath_develop.dsv'
+[5.480s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/hsr/disaster_response_swarm/build/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath_develop.sh'
+[5.491s] Level 1:colcon.colcon_core.environment:checking '/home/hsr/disaster_response_swarm/install/disaster_response_swarm' for CMake module files
+[5.492s] Level 1:colcon.colcon_core.environment:checking '/home/hsr/disaster_response_swarm/install/disaster_response_swarm' for CMake config files
+[5.494s] Level 1:colcon.colcon_core.environment:checking '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib'
+[5.494s] Level 1:colcon.colcon_core.environment:checking '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/bin'
+[5.494s] Level 1:colcon.colcon_core.environment:checking '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/pkgconfig/disaster_response_swarm.pc'
+[5.495s] Level 1:colcon.colcon_core.environment:checking '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages'
+[5.495s] Level 1:colcon.colcon_core.shell:create_environment_hook('disaster_response_swarm', 'pythonpath')
+[5.495s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath.ps1'
+[5.496s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath.dsv'
+[5.497s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/hook/pythonpath.sh'
+[5.498s] Level 1:colcon.colcon_core.environment:checking '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/bin'
+[5.498s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(disaster_response_swarm)
+[5.499s] INFO:colcon.colcon_core.shell:Creating package script '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/package.ps1'
+[5.500s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/package.dsv'
+[5.501s] INFO:colcon.colcon_core.shell:Creating package script '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/package.sh'
+[5.502s] INFO:colcon.colcon_core.shell:Creating package script '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/package.bash'
+[5.504s] INFO:colcon.colcon_core.shell:Creating package script '/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/package.zsh'
+[5.505s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/hsr/disaster_response_swarm/install/disaster_response_swarm/share/colcon-core/packages/disaster_response_swarm)
+[5.507s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[5.507s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[5.507s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[5.507s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[5.533s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[5.533s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[5.533s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[5.567s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[5.567s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/hsr/disaster_response_swarm/install/local_setup.ps1'
+[5.569s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/hsr/disaster_response_swarm/install/_local_setup_util_ps1.py'
+[5.571s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/hsr/disaster_response_swarm/install/setup.ps1'
+[5.602s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/hsr/disaster_response_swarm/install/local_setup.sh'
+[5.604s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/hsr/disaster_response_swarm/install/_local_setup_util_sh.py'
+[5.605s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/hsr/disaster_response_swarm/install/setup.sh'
+[5.634s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/hsr/disaster_response_swarm/install/local_setup.bash'
+[5.635s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/hsr/disaster_response_swarm/install/setup.bash'
+[5.665s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/hsr/disaster_response_swarm/install/local_setup.zsh'
+[5.667s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/hsr/disaster_response_swarm/install/setup.zsh'

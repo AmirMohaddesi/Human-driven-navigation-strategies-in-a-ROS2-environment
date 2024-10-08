@@ -1,11 +1,11 @@
-import os
-import sys
+# import os
+# import sys
 import xml.etree.ElementTree as ET
 import rclpy
-from ament_index_python.packages import get_package_share_directory
+# from ament_index_python.packages import get_package_share_directory
 from gazebo_msgs.srv import SpawnEntity
 import argparse
-from launch_ros.actions import Node
+# from launch_ros.actions import Node
 
 def main():
 

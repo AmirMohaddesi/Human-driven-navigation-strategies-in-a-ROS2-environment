@@ -29,7 +29,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'spawn_robot_server = disaster_response_swarm.spawn_robot_server:main',
+            'spawn_robot_server = disaster_response_swarm.spawn_robot_server:main'
         ],
     },
 )   

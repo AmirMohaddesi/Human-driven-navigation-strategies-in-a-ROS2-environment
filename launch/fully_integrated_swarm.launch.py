@@ -65,6 +65,12 @@ def generate_launch_description():
         'namespaced_rviz_config.rviz'
     )
 
+    map_merge_rviz_file = os.path.join(
+        get_package_share_directory('merge_map'),
+        'config', 
+        'merge_map.rviz'
+    )
+
     map_yaml_file = os.path.join(
         disaster_pkg_dir,
         'maps',
@@ -307,5 +313,28 @@ def generate_launch_description():
 
         simulation_ld.append(robot_ld)
 
+
+    map_merge_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', map_merge_rviz_file],
+        parameters=[{'use_sim_time': True}]
+    ) 
+    
+    map_merge_rviz = Node(
+        package='merge_map',
+        executable='merge_map',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+        remappings=[
+            ("/map1", "/robot1_ns/map"),
+            ("/map2", "/robot2_ns/map"),
+        ]
+    )
+
+    simulation_ld.append(map_merge_node)
+    simulation_ld.append(map_merge_rviz)
 
     return  LaunchDescription(simulation_ld)

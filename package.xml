@@ -18,6 +18,7 @@
   <exec_depend>turtlebot3_navigation2</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>merge_map</exec_depend>
   <exec_depend>cartographer_ros</exec_depend>
   <exec_depend>rtabmap_msgs</exec_depend>
   <exec_depend>pcl_conversions</exec_depend>
