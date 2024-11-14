@@ -1,0 +1,4 @@
+/home/hsr/.local/lib/python3.10/site-packages/setuptools/command/easy_install.py:157: EasyInstallDeprecationWarning: easy_install command is deprecated. Use build and pip and other standards-based tools.
+  warnings.warn(
+/home/hsr/.local/lib/python3.10/site-packages/pkg_resources/__init__.py:122: PkgResourcesDeprecationWarning: None is an invalid version and will not be supported in a future release
+  warnings.warn(

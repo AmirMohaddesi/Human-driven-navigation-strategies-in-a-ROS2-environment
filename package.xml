@@ -3,7 +3,7 @@
   <name>disaster_response_swarm</name>
   <version>0.0.1</version>
   <description>Disaster response swarm coordination using ROS2</description>
-  <maintainer email="your.email@domain.com">Your Name</maintainer>
+  <maintainer email="smohadde@uci.edu">Seyed A. Mohaddesi</maintainer>
   <license>Apache License 2.0</license>
 
   <!-- Build tool dependencies -->

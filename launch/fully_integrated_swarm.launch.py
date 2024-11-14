@@ -66,9 +66,15 @@ def generate_launch_description():
     )
 
     map_merge_rviz_file = os.path.join(
-        get_package_share_directory('merge_map'),
+        disaster_pkg_dir,
         'config', 
         'merge_map.rviz'
+    )
+
+    map_merge_params_file = os.path.join(
+        disaster_pkg_dir,
+        'config', 
+        'map_merge_params.yaml'
     )
 
     map_yaml_file = os.path.join(
@@ -313,28 +319,58 @@ def generate_launch_description():
 
         simulation_ld.append(robot_ld)
 
+    # # Static Transform Publishers as per instructions
+    # stp= Node(
+    #     package='tf2_ros',
+    #     executable='static_transform_publisher',
+    #     name='stp',
+    #     namespace="",
+    #     output='screen',
+    #     parameters=[{
+    #         'use_sim_time': use_sim_time
+    #     }],
+    #     remappings=remappings,
+    #     arguments=[
+    #         '--x', '0', '--y', '0', '--z', '0',
+    #         '--roll', '0', '--pitch', '0', '--yaw', '0',
+    #         '--frame-id', 'world', '--child-frame-id', 'map'
+    #     ]
+    # )
 
-    map_merge_node = Node(
+
+    map_merge_rviz = Node(
         package='rviz2',
         executable='rviz2',
-        name='rviz2',
+        name='map_merge_rviz',
         output='screen',
         arguments=['-d', map_merge_rviz_file],
-        parameters=[{'use_sim_time': True}]
+        parameters=[{'use_sim_time': use_sim_time}]
     ) 
-    
-    map_merge_rviz = Node(
-        package='merge_map',
-        executable='merge_map',
-        output='screen',
-        parameters=[{'use_sim_time': True}],
-        remappings=[
-            ("/map1", "/robot1_ns/map"),
-            ("/map2", "/robot2_ns/map"),
-        ]
-    )
 
-    simulation_ld.append(map_merge_node)
+
+    # Robot spawn command with model path
+    merge_map_cmd = Node(
+            package='disaster_response_swarm',  # Replace with your package name
+            executable='merge_map_node',  # The name of your executable
+            name='merge_map_node',        # Name of the node
+            output='screen',              # Output to screen
+            parameters=[],
+            remappings=[],
+        )
+    
+    # map_merge_node = Node(
+    #     package='multirobot_map_merge',
+    #     executable='map_merge',
+    #     output='screen',
+    #     parameters=[
+    #         map_merge_params_file,
+    #         {   'known_init_pose': False,
+    #             'use_sim_time': use_sim_time}],
+    #     remappings=remappings
+    # )
+    
+    # simulation_ld.append(stp)
+    simulation_ld.append(merge_map_cmd)
     simulation_ld.append(map_merge_rviz)
 
     return  LaunchDescription(simulation_ld)

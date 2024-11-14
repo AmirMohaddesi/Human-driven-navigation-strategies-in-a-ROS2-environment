@@ -1,0 +1,143 @@
+[0.000000] (-) TimerEvent: {}
+[0.003014] (disaster_response_swarm) JobQueued: {'identifier': 'disaster_response_swarm', 'dependencies': OrderedDict()}
+[0.003838] (disaster_response_swarm) JobStarted: {'identifier': 'disaster_response_swarm'}
+[0.099884] (-) TimerEvent: {}
+[0.204195] (-) TimerEvent: {}
+[0.305961] (-) TimerEvent: {}
+[0.408889] (-) TimerEvent: {}
+[0.510249] (-) TimerEvent: {}
+[0.612016] (-) TimerEvent: {}
+[0.721262] (-) TimerEvent: {}
+[0.822027] (-) TimerEvent: {}
+[0.928589] (-) TimerEvent: {}
+[1.033921] (-) TimerEvent: {}
+[1.142932] (-) TimerEvent: {}
+[1.249255] (-) TimerEvent: {}
+[1.356628] (-) TimerEvent: {}
+[1.466367] (-) TimerEvent: {}
+[1.571229] (-) TimerEvent: {}
+[1.673217] (-) TimerEvent: {}
+[1.780167] (-) TimerEvent: {}
+[1.888054] (-) TimerEvent: {}
+[1.994420] (-) TimerEvent: {}
+[2.166902] (-) TimerEvent: {}
+[2.284119] (-) TimerEvent: {}
+[2.427639] (-) TimerEvent: {}
+[2.614284] (-) TimerEvent: {}
+[2.725700] (-) TimerEvent: {}
+[2.852121] (-) TimerEvent: {}
+[2.989452] (-) TimerEvent: {}
+[3.097821] (-) TimerEvent: {}
+[3.213315] (-) TimerEvent: {}
+[3.316181] (-) TimerEvent: {}
+[3.417077] (-) TimerEvent: {}
+[3.525572] (-) TimerEvent: {}
+[3.629822] (-) TimerEvent: {}
+[3.731335] (-) TimerEvent: {}
+[3.837196] (-) TimerEvent: {}
+[3.938384] (-) TimerEvent: {}
+[4.041837] (-) TimerEvent: {}
+[4.142974] (-) TimerEvent: {}
+[4.246689] (-) TimerEvent: {}
+[4.350542] (-) TimerEvent: {}
+[4.451588] (-) TimerEvent: {}
+[4.552023] (-) TimerEvent: {}
+[4.657443] (-) TimerEvent: {}
+[4.760102] (-) TimerEvent: {}
+[4.860437] (-) TimerEvent: {}
+[4.961232] (-) TimerEvent: {}
+[5.063121] (-) TimerEvent: {}
+[5.163438] (-) TimerEvent: {}
+[5.263748] (-) TimerEvent: {}
+[5.366126] (-) TimerEvent: {}
+[5.466680] (-) TimerEvent: {}
+[5.567055] (-) TimerEvent: {}
+[5.668125] (-) TimerEvent: {}
+[5.770960] (-) TimerEvent: {}
+[5.872077] (-) TimerEvent: {}
+[5.884950] (disaster_response_swarm) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/hsr/disaster_response_swarm/build/disaster_response_swarm/build', '--no-deps', 'symlink_data'], 'cwd': '/home/hsr/disaster_response_swarm/build/disaster_response_swarm', 'env': {'GZ_SIM_SYSTEM_PLUGIN_PATH': '/opt/ros/humble/lib', 'GJS_DEBUG_TOPICS': 'JS ERROR;JS LOG', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'CONDA_PROMPT_MODIFIER': '(base)', 'GZ_SIM_RESOURCE_PATH': '/opt/ros/humble/share/as2_gazebo_assets/worlds:/opt/ros/humble/share/as2_gazebo_assets/models', 'GURUMDDS_HOME': '/usr/share/gurumdds/cmake/../../..', 'USER': 'hsr', 'XDG_SESSION_TYPE': 'x11', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/hsr/m-explore-ros2/install/multirobot_map_merge/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/tinyspline_vendor/lib64:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/rti.com/rti_connext_dds-6.0.1/lib/x64Linux4gcc7.3.0:/opt/rti.com/rti_connext_dds-6.0.1/bin:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/opt/ortools_vendor/lib:/opt/ros/humble/opt/openvdb_vendor/lib:/opt/ros/humble/opt/openeb_vendor/lib:/opt/ros/humble/opt/libphidget22/lib:/opt/ros/humble/opt/libcaer_vendor/lib:/usr/share/gurumdds/cmake/../../../lib:/opt/ros/humble/opt/aws_sdk_cpp_vendor/lib:/opt/ros/humble/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:', 'HOME': '/home/hsr', 'CONDA_SHLVL': '1', 'OLDPWD': '/home/hsr', 'DESKTOP_SESSION': 'ubuntu', 'CONNEXTDDS_DIR': '/opt/rti.com/rti_connext_dds-6.0.1', 'GIO_LAUNCHED_DESKTOP_FILE': '/usr/share/applications/terminator.desktop', 'GAZEBO_MASTER_URI': 'http://localhost:11345', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'NDDSHOME': '/opt/rti.com/rti_connext_dds-6.0.1', 'MANAGERPID': '33855', 'SYSTEMD_EXEC_PID': '34180', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', '_CE_M': '', 'TERMINATOR_DBUS_NAME': 'net.tenshu.Terminator23558193cd9818af7fe4d2c2f5bd9d00f', 'GIO_LAUNCHED_DESKTOP_FILE_PID': '71726', 'COLCON_PREFIX_PATH': '/home/hsr/disaster_response_swarm/install:/home/hsr/m-explore-ros2/install', 'ROS_DISTRO': 'humble', 'GTK_IM_MODULE': 'ibus', 'LOGNAME': 'hsr', 'IGN_GAZEBO_MODEL_PATH': '/opt/ros/humble/share', 'JOURNAL_STREAM': '8:314036', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'hsr', 'TERM': 'xterm-256color', 'GAZEBO_MODEL_PATH': '/usr/share/gazebo-11/models:/opt/ros/humble/share', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', '_CE_CONDA': '', 'ROS_LOCALHOST_ONLY': '0', 'WINDOWPATH': '2', 'OGRE_RESOURCE_PATH': '/usr/lib/x86_64-linux-gnu/OGRE-1.9.0', 'PATH': '/home/hsr/miniconda3/bin:/home/hsr/miniconda3/condabin:/opt/rti.com/rti_connext_dds-6.0.1/lib/x64Linux4gcc7.3.0:/opt/rti.com/rti_connext_dds-6.0.1/bin:/opt/ros/humble/opt/ortools_vendor/bin:/opt/ros/humble/opt/openeb_vendor/bin:/opt/ros/humble/bin:/usr/.local/bin:/home/hsr/.local/bin:/usr/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/hsr-Aurora-R3:@/tmp/.ICE-unix/34140,unix/hsr-Aurora-R3:/tmp/.ICE-unix/34140', 'INVOCATION_ID': '426bd4768a2e4ef39d8f79f77ad2de1e', 'XDG_MENU_PREFIX': 'gnome-', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':1', 'TERMINATOR_DBUS_PATH': '/net/tenshu/Terminator2', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'IBUS_DISABLE_SNOOPER': '1', 'RMW_IMPLEMENTATION': 'rmw_cyclonedds_cpp', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/gdm/Xauthority', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'SSH_AGENT_LAUNCHER': 'gnome-keyring', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'ROS_DOMAIN_ID': '30', 'AMENT_PREFIX_PATH': '/home/hsr/disaster_response_swarm/install/disaster_response_swarm:/home/hsr/m-explore-ros2/install/multirobot_map_merge:/home/hsr/m-explore-ros2/install/explore_lite:/opt/ros/humble', 'CONDA_PYTHON_EXE': '/home/hsr/miniconda3/bin/python', 'SHELL': '/bin/bash', 'TERMINATOR_UUID': 'urn:uuid:09fc749c-a851-4874-a133-e9ee78573f01', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'IGN_GAZEBO_RESOURCE_PATH': '/opt/ros/humble/share/andino_gz/models:/opt/ros/humble/share', 'CONDA_DEFAULT_ENV': 'base', 'GPG_AGENT_INFO': '/run/user/1000/gnupg/S.gpg-agent:0:1', 'GAZEBO_RESOURCE_PATH': '/usr/share/gazebo-11:/opt/ros/humble/share/andino_gz_classic/worlds:/opt/ros/humble/share', 'GJS_DEBUG_OUTPUT': 'stderr', 'CONNEXTDDS_ARCH': 'x64Linux4gcc7.3.0', 'GZ_VERSION': 'fortress', 'GAZEBO_MODEL_DATABASE_URI': 'http://models.gazebosim.org', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/hsr/disaster_response_swarm/build/disaster_response_swarm', 'TURTLEBOT3_MODEL': 'waffle', 'LC_ALL': 'en_US.UTF-8', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'CONDA_EXE': '/home/hsr/miniconda3/bin/conda', 'GAZEBO_PLUGIN_PATH': '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/hsr/disaster_response_swarm/build/disaster_response_swarm/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages:/home/hsr/disaster_response_swarm/build/disaster_response_swarm:/home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages:/opt/ros/humble/lib/python/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'CONDA_PREFIX': '/home/hsr/miniconda3', 'COLCON': '1', 'VTE_VERSION': '6800', 'CMAKE_PREFIX_PATH': '/home/hsr/m-explore-ros2/install/multirobot_map_merge:/home/hsr/m-explore-ros2/install/explore_lite:/opt/ros/humble/opt/openeb_vendor:/opt/ros/humble/opt/libcaer_vendor'}, 'shell': False}
+[5.972218] (-) TimerEvent: {}
+[6.072604] (-) TimerEvent: {}
+[6.175137] (-) TimerEvent: {}
+[6.279952] (-) TimerEvent: {}
+[6.381622] (-) TimerEvent: {}
+[6.485137] (-) TimerEvent: {}
+[6.586559] (-) TimerEvent: {}
+[6.687651] (-) TimerEvent: {}
+[6.789579] (-) TimerEvent: {}
+[6.894449] (-) TimerEvent: {}
+[6.996144] (-) TimerEvent: {}
+[7.096649] (-) TimerEvent: {}
+[7.204792] (-) TimerEvent: {}
+[7.305217] (-) TimerEvent: {}
+[7.405854] (-) TimerEvent: {}
+[7.508278] (-) TimerEvent: {}
+[7.616181] (-) TimerEvent: {}
+[7.717104] (-) TimerEvent: {}
+[7.821597] (-) TimerEvent: {}
+[7.923456] (-) TimerEvent: {}
+[8.024083] (-) TimerEvent: {}
+[8.128810] (-) TimerEvent: {}
+[8.240256] (-) TimerEvent: {}
+[8.364944] (-) TimerEvent: {}
+[8.383279] (disaster_response_swarm) StdoutLine: {'line': b'running develop\n'}
+[8.387596] (disaster_response_swarm) StderrLine: {'line': b'/home/hsr/.local/lib/python3.10/site-packages/setuptools/command/easy_install.py:157: EasyInstallDeprecationWarning: easy_install command is deprecated. Use build and pip and other standards-based tools.\n'}
+[8.387908] (disaster_response_swarm) StderrLine: {'line': b'  warnings.warn(\n'}
+[8.478573] (-) TimerEvent: {}
+[8.578892] (-) TimerEvent: {}
+[8.679881] (-) TimerEvent: {}
+[8.799038] (-) TimerEvent: {}
+[8.904739] (-) TimerEvent: {}
+[9.007159] (-) TimerEvent: {}
+[9.107582] (-) TimerEvent: {}
+[9.208079] (-) TimerEvent: {}
+[9.317770] (-) TimerEvent: {}
+[9.420140] (-) TimerEvent: {}
+[9.506107] (disaster_response_swarm) StderrLine: {'line': b'/home/hsr/.local/lib/python3.10/site-packages/pkg_resources/__init__.py:122: PkgResourcesDeprecationWarning: None is an invalid version and will not be supported in a future release\n'}
+[9.506374] (disaster_response_swarm) StderrLine: {'line': b'  warnings.warn(\n'}
+[9.520378] (-) TimerEvent: {}
+[9.621829] (-) TimerEvent: {}
+[9.726208] (-) TimerEvent: {}
+[9.829155] (-) TimerEvent: {}
+[9.931659] (-) TimerEvent: {}
+[10.078875] (-) TimerEvent: {}
+[10.186552] (-) TimerEvent: {}
+[10.289271] (-) TimerEvent: {}
+[10.390182] (-) TimerEvent: {}
+[10.509446] (-) TimerEvent: {}
+[10.617455] (-) TimerEvent: {}
+[10.723146] (-) TimerEvent: {}
+[10.835055] (-) TimerEvent: {}
+[10.939160] (-) TimerEvent: {}
+[11.046759] (-) TimerEvent: {}
+[11.154770] (-) TimerEvent: {}
+[11.258969] (-) TimerEvent: {}
+[11.372385] (-) TimerEvent: {}
+[11.474428] (-) TimerEvent: {}
+[11.581227] (-) TimerEvent: {}
+[11.696785] (-) TimerEvent: {}
+[11.798242] (-) TimerEvent: {}
+[11.900468] (-) TimerEvent: {}
+[12.010355] (-) TimerEvent: {}
+[12.116934] (-) TimerEvent: {}
+[12.227224] (-) TimerEvent: {}
+[12.318791] (disaster_response_swarm) StdoutLine: {'line': b'running egg_info\n'}
+[12.320218] (disaster_response_swarm) StdoutLine: {'line': b'writing disaster_response_swarm.egg-info/PKG-INFO\n'}
+[12.322961] (disaster_response_swarm) StdoutLine: {'line': b'writing dependency_links to disaster_response_swarm.egg-info/dependency_links.txt\n'}
+[12.324659] (disaster_response_swarm) StdoutLine: {'line': b'writing entry points to disaster_response_swarm.egg-info/entry_points.txt\n'}
+[12.326265] (disaster_response_swarm) StdoutLine: {'line': b'writing requirements to disaster_response_swarm.egg-info/requires.txt\n'}
+[12.326783] (disaster_response_swarm) StdoutLine: {'line': b'writing top-level names to disaster_response_swarm.egg-info/top_level.txt\n'}
+[12.329066] (-) TimerEvent: {}
+[12.337164] (disaster_response_swarm) StdoutLine: {'line': b"reading manifest file 'disaster_response_swarm.egg-info/SOURCES.txt'\n"}
+[12.344121] (disaster_response_swarm) StdoutLine: {'line': b'running build_ext\n'}
+[12.344432] (disaster_response_swarm) StdoutLine: {'line': b'Creating /home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages/disaster-response-swarm.egg-link (link to .)\n'}
+[12.345384] (disaster_response_swarm) StdoutLine: {'line': b'Installing merge_map_node script to /home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/disaster_response_swarm\n'}
+[12.347150] (disaster_response_swarm) StdoutLine: {'line': b'Installing spawn_robot_server script to /home/hsr/disaster_response_swarm/install/disaster_response_swarm/lib/disaster_response_swarm\n'}
+[12.349099] (disaster_response_swarm) StdoutLine: {'line': b'\n'}
+[12.349815] (disaster_response_swarm) StdoutLine: {'line': b'Installed /home/hsr/disaster_response_swarm/build/disaster_response_swarm\n'}
+[12.350239] (disaster_response_swarm) StdoutLine: {'line': b'running symlink_data\n'}
+[12.431169] (-) TimerEvent: {}
+[12.506871] (disaster_response_swarm) CommandEnded: {'returncode': 0}
+[12.537208] (-) TimerEvent: {}
+[12.591739] (disaster_response_swarm) JobEnded: {'identifier': 'disaster_response_swarm', 'rc': 0}
+[12.595763] (-) EventReactorShutdown: {}
