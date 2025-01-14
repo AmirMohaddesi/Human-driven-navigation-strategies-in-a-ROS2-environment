@@ -14,7 +14,7 @@ setup(
         # Automatically include all launch files
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*.py'))),
         (os.path.join('share', package_name, 'worlds'), glob(os.path.join('worlds', '*.world'))),
-        (os.path.join('share', package_name, 'maps'), glob(os.path.join('maps', '*.*'))),
+        (os.path.join('share', package_name, 'maps'), glob(os.path.join('maps', '*'))),
         (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*.yaml'))),
         (os.path.join('share', package_name, 'urdf'), glob(os.path.join('urdf', '*.urdf'))),
         (os.path.join('share', package_name, 'models/turtlebot3_waffle'), glob(os.path.join('models', 'turtlebot3_waffle', '*'))),

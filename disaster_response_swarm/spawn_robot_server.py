@@ -89,6 +89,7 @@ def main():
     request.initial_pose.position.x = args.x
     request.initial_pose.position.y = args.y
     request.initial_pose.position.z = args.z
+    # request.reference_frame = "map"
 
     node.get_logger().info("Sending service request to `/spawn_entity`")
     future = client.call_async(request)

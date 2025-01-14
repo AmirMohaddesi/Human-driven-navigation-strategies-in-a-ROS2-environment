@@ -67,7 +67,7 @@ def generate_launch_description():
 
     map_merge_rviz_file = os.path.join(
         disaster_pkg_dir,
-        'config', 
+        'rviz', 
         'merge_map.rviz'
     )
 
@@ -138,11 +138,24 @@ def generate_launch_description():
             convert_types=True
         )
 
+        # Open the file in read mode
+        with open(sdf_file_path, 'r') as file:
+            # Read the entire content of the file
+            file_content = file.read()
+
+        # Replace the old text with the new text
+        new_content = file_content.replace('<robot_namespace>', robot_namespace)
+
+        # Open the file in write mode and write the new content
+        new_sdf_file = robot_namespace + '_model.sdf'
+        with open(new_sdf_file, 'w') as file:
+            file.write(new_content)
+
         # Robot spawn command with model path
         spawn_entity_cmd = ExecuteProcess(
             cmd=[
                 'ros2', 'run', 'disaster_response_swarm', 'spawn_robot_server',
-                '-urdf', sdf_file_path,
+                '-urdf', new_sdf_file,
                 '-n', robot,
                 '-ns', robot_namespace,
                 '-namespace', 'true',
@@ -307,11 +320,11 @@ def generate_launch_description():
         robot_ld = GroupAction([
             spawn_entity_cmd,
             rsp_cmd,
-            jsp_cmd,
-            static_transform_publisher_1,
-            static_transform_publisher_2,
-            static_transform_publisher_3,
-            static_transform_publisher_4,
+            # jsp_cmd,
+            # static_transform_publisher_1,
+            # static_transform_publisher_2,
+            # static_transform_publisher_3,
+            # static_transform_publisher_4,
             robot_nav,
             robot_slam,
             robot_rviz
