@@ -77,8 +77,9 @@ def generate_launch_description():
         'map_merge_params.yaml'
     )
 
+    
     map_yaml_file = os.path.join(
-        disaster_pkg_dir,
+        '/home/amix/ros_ws/disaster_response_swarm/',
         'maps',
         'map.yaml'
     )
@@ -147,7 +148,7 @@ def generate_launch_description():
         new_content = file_content.replace('<robot_namespace>', robot_namespace)
 
         # Open the file in write mode and write the new content
-        new_sdf_file = robot_namespace + '_model.sdf'
+        new_sdf_file = 'models/' + robot_namespace + '_model.sdf'
         with open(new_sdf_file, 'w') as file:
             file.write(new_content)
 
@@ -165,7 +166,6 @@ def generate_launch_description():
             output='screen'
         )
 
-
         # Robot state publisher with the model description
         rsp_cmd = Node(
             package='robot_state_publisher',
@@ -178,87 +178,40 @@ def generate_launch_description():
             remappings=remappings
         )
 
-        # Robot state publisher with the model description
-        jsp_cmd = Node(
-            package='joint_state_publisher',
-            executable='joint_state_publisher',
-            name='joint_state_publisher',
-            namespace=robot_namespace,
-            parameters=[{
-                'use_sim_time': use_sim_time,
-                'robot_description': robot_desc}],
-            remappings=remappings
-        )
 
-    
-        # Static Transform Publishers as per instructions
-        static_transform_publisher_1 = Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='static_transform_publisher_1',
-            namespace=robot_namespace,
-            output='screen',
-            parameters=[{
-                'use_sim_time': use_sim_time
-            }],
-            remappings=remappings,
-            arguments=[
-                '--x', '0', '--y', '0', '--z', '0',
-                '--roll', '0', '--pitch', '0', '--yaw', '0',
-                '--frame-id', 'map', '--child-frame-id', 'odom'
-            ]
-        )
+        # static_transform_publisher_1 = Node(
+        #     package='tf2_ros',
+        #     executable='static_transform_publisher',
+        #     name='static_transform_publisher_1',
+        #     namespace=robot_namespace,
+        #     output='screen',
+        #     parameters=[{
+        #         'use_sim_time': use_sim_time
+        #     }],
+        #     remappings=remappings,
+        #     arguments=[
+        #         '--x', '0', '--y', '0', '--z', '0',
+        #         '--roll', '0', '--pitch', '0', '--yaw', '0',
+        #         '--frame-id', 'map', '--child-frame-id', 'odom'
+        #     ]
+        # )
 
-        static_transform_publisher_2 = Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='static_transform_publisher_2',
-            namespace=robot_namespace,
-            output='screen',
-            parameters=[{
-                'use_sim_time': use_sim_time
-            }],
-            remappings=remappings,
-            arguments=[
-                '--x', '0', '--y', '0', '--z', '0',
-                '--roll', '0', '--pitch', '0', '--yaw', '0',
-                '--frame-id', 'odom', '--child-frame-id', 'base_footprint'
-            ]
-        )
-    
-        static_transform_publisher_3 = Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='static_transform_publisher_3',
-            namespace=robot_namespace,
-            output='screen',
-            parameters=[{
-                'use_sim_time': use_sim_time
-            }],
-            remappings=remappings,
-            arguments=[           
-                '--x', '0', '--y', '0.1', '--z', '0.3',
-                '--roll', '0', '--pitch', '0', '--yaw', '0',
-                '--frame-id', 'base_footprint', '--child-frame-id', 'camera_link'
-            ]
-        )
-
-        static_transform_publisher_4 = Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='static_transform_publisher_4',
-            namespace=robot_namespace,
-            output='screen',
-            parameters=[{
-                'use_sim_time': use_sim_time
-            }],
-            remappings=remappings,
-            arguments=[                       
-                '--x', '0', '--y', '0', '--z', '0',
-                '--roll', '0', '--pitch', '-1.5708', '--yaw', '0',
-                '--frame-id', 'camera_link', '--child-frame-id', 'camera_rgb_optical_frame'
-            ]
-        )
+        # static_transform_publisher_2 = Node(
+        #     package='tf2_ros',
+        #     executable='static_transform_publisher',
+        #     name='static_transform_publisher_2',
+        #     namespace=robot_namespace,
+        #     output='screen',
+        #     parameters=[{
+        #         'use_sim_time': use_sim_time
+        #     }],
+        #     remappings=remappings,
+        #     arguments=[
+        #         '--x', '0', '--y', '0', '--z', '0',
+        #         '--roll', '0', '--pitch', '0', '--yaw', '0',
+        #         '--frame-id', 'odom', '--child-frame-id', 'base_footprint'
+        #     ]
+        # )
 
         robot_nav = IncludeLaunchDescription(
             PythonLaunchDescriptionSource([turtlebot_nav2_prefix]),
@@ -272,7 +225,7 @@ def generate_launch_description():
                 'use_sim_time': use_sim_time,
                 'params_file' : rewritten_yaml,
                 'use_composition': 'False',
-                'use_respawn': 'True',
+                'use_respawn': 'False',
                 'use_simulator': 'False',
                 'spawn': 'False',                        #added to condition spawn
                 'use_robot_state_pub': 'False',
@@ -280,6 +233,44 @@ def generate_launch_description():
                 'headless': 'False'
             }.items()
         )
+        
+        # lifecycle_manager_cmd = Node(
+        #     package='nav2_lifecycle_manager',
+        #     executable='lifecycle_manager',
+        #     name='lifecycle_manager_localization',
+        #     output='screen',
+        #     parameters=[{'use_sim_time': use_sim_time},
+        #                 {'autostart': True},
+        #                 {'node_names': ['amcl']}]
+        # )
+        # Robot spawn command with model path
+        initial_pose_publisher = Node(
+            package='disaster_response_swarm',  # Replace with your package name
+            executable='initial_pose_publisher',  # The name of your executable
+            name='initial_pose_publisher',        # Name of the node
+            namespace=robot_namespace,
+            output='screen',              # Output to screen
+            parameters=[{'robot_namespace': robot_namespace}],
+            remappings=[],
+        )
+
+        start_lifecycle_manager_cmd = Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager',
+            namespace=robot_namespace,
+            output='screen',
+            emulate_tty=True,  # https://github.com/ros2/launch/issues/188
+            parameters=[{'use_sim_time': use_sim_time},
+                        {'autostart': True},
+                        {'node_names': [
+                            # 'amcl',
+                            'map_server',
+                            'velocity_smoother',
+                            'controller_server',
+                            # 'collision_monitor',
+                            'planner_server'
+                        ]}])
 
         robot_rviz = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -299,9 +290,14 @@ def generate_launch_description():
             parameters=[
                 slam_yaml_file,
                 {
-                'use_lifecycle_manager': 'False',
+                'use_lifecycle_manager': 'True',
                 'use_sim_time': use_sim_time,
-                'use_namespace': 'True'
+                'use_namespace': 'True',
+                'global_frame': 'map',
+                'save_map_time': 0.0,  # Disable automatic map saving
+                'lifetime': 3600.0,  # Keep the map data alive for 1 hour
+                'publish_rate': 2.0,  # Publish the map at 2 Hz
+                'map_save_dir': '/home/amix/ros_ws/disaster_response_swarm/tmp',  # Save maps to a different directory
                 }
             ],
             remappings=[
@@ -309,7 +305,7 @@ def generate_launch_description():
                 ("/tf_static", "tf_static"),
                 ("/scan", "scan"),
                 ("/odom", "odom"),
-                ("/map", "map"),
+                ("/map", "local_map"),
                 ("/map_metadata", "map_metadata"),
                 ("/slam_toolbox/scan_visualization", "slam_toolbox/scan_visualization"),
                 ("/slam_toolbox/graph_visualization", "slam_toolbox/graph_visualization"),
@@ -320,36 +316,16 @@ def generate_launch_description():
         robot_ld = GroupAction([
             spawn_entity_cmd,
             rsp_cmd,
-            # jsp_cmd,
+            # initial_pose_publisher,
             # static_transform_publisher_1,
             # static_transform_publisher_2,
-            # static_transform_publisher_3,
-            # static_transform_publisher_4,
             robot_nav,
+            # start_lifecycle_manager_cmd,
             robot_slam,
             robot_rviz
         ])
 
         simulation_ld.append(robot_ld)
-
-    # # Static Transform Publishers as per instructions
-    # stp= Node(
-    #     package='tf2_ros',
-    #     executable='static_transform_publisher',
-    #     name='stp',
-    #     namespace="",
-    #     output='screen',
-    #     parameters=[{
-    #         'use_sim_time': use_sim_time
-    #     }],
-    #     remappings=remappings,
-    #     arguments=[
-    #         '--x', '0', '--y', '0', '--z', '0',
-    #         '--roll', '0', '--pitch', '0', '--yaw', '0',
-    #         '--frame-id', 'world', '--child-frame-id', 'map'
-    #     ]
-    # )
-
 
     map_merge_rviz = Node(
         package='rviz2',
@@ -371,18 +347,6 @@ def generate_launch_description():
             remappings=[],
         )
     
-    # map_merge_node = Node(
-    #     package='multirobot_map_merge',
-    #     executable='map_merge',
-    #     output='screen',
-    #     parameters=[
-    #         map_merge_params_file,
-    #         {   'known_init_pose': False,
-    #             'use_sim_time': use_sim_time}],
-    #     remappings=remappings
-    # )
-    
-    # simulation_ld.append(stp)
     simulation_ld.append(merge_map_cmd)
     simulation_ld.append(map_merge_rviz)
 

@@ -38,15 +38,19 @@ def merge_maps(robot_maps):
                 if merged_map.data[merged_i] == -1:
                     merged_map.data[merged_i] = robot_map.data[i]
                 else:
-                    merged_map.data[merged_i] = int((merged_map.data[merged_i] + robot_map.data[i]) / 2   )     
+                    merged_map.data[merged_i] = int((merged_map.data[merged_i] + robot_map.data[i]) / 2)
     
     return merged_map
 
 class MergeMapNode(Node):
     def __init__(self):
         super().__init__('merge_map_node')
-        self.publisher = self.create_publisher(OccupancyGrid, '/merge_map', 10)
+
+        # Initialize the TransformBroadcaster
         self.transform_broadcaster = TransformBroadcaster(self)
+
+        self.publisher = self.create_publisher(OccupancyGrid, '/merged_map', 10)
+        self.robot_map_publishers = {}
         self.robot_maps = {}
 
         # Start a timer to periodically discover topics
@@ -68,12 +72,13 @@ class MergeMapNode(Node):
         transform.transform.rotation.y = 0.0
         transform.transform.rotation.z = 0.0
 
+        # Send the transform
         self.transform_broadcaster.sendTransform(transform)
 
     def discover_topics(self):
         topic_infos = self.get_topic_names_and_types()
         for topic_name, topic_types in topic_infos:
-            if 'nav_msgs/msg/OccupancyGrid' in topic_types and '/map' in topic_name:
+            if 'nav_msgs/msg/OccupancyGrid' in topic_types and '/local_map' in topic_name:
                 if topic_name not in self.robot_maps:
                     self.get_logger().info(f"Subscribing to new map topic: {topic_name}")
                     self.robot_maps[topic_name] = None
@@ -95,6 +100,19 @@ class MergeMapNode(Node):
             
             # Publish the merged map
             self.publisher.publish(merged_map)
+            self.get_logger().info(f"Published merged map")
+
+            # Now, publish the merged map to individual robot topics
+            
+            # for topic_name in self.robot_maps.keys():
+            #     robot_name = topic_name.replace('/local_map',"")
+            #     robot_map_topic = f"{robot_name}/updated_map"
+            #     if robot_name not in self.robot_map_publishers:
+            #         self.robot_map_publishers[robot_name] = self.create_publisher(OccupancyGrid, robot_map_topic, 10)
+
+            #     merged_map.header.stamp = self.get_clock().now().to_msg()
+            #     self.robot_map_publishers[robot_name].publish(merged_map)
+            #     self.get_logger().info(f"Published merged map to {robot_name} on {robot_map_topic}")
 
 def main(args=None):
     rclpy.init(args=args)
