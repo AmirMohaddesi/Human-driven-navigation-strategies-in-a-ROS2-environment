@@ -100,7 +100,7 @@ class MergeMapNode(Node):
             
             # Publish the merged map
             self.publisher.publish(merged_map)
-            self.get_logger().info(f"Published merged map")
+            # self.get_logger().info(f"Published merged map")
 
             # Now, publish the merged map to individual robot topics
             

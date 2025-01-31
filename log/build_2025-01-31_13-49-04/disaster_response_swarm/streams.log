@@ -1,0 +1,60 @@
+[0.454s] Invoking command in '/home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm': PYTHONPATH=/home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/build --no-deps symlink_data
+[0.652s] running develop
+[0.773s] running egg_info
+[0.773s] creating disaster_response_swarm.egg-info
+[0.774s] writing disaster_response_swarm.egg-info/PKG-INFO
+[0.774s] writing dependency_links to disaster_response_swarm.egg-info/dependency_links.txt
+[0.774s] writing entry points to disaster_response_swarm.egg-info/entry_points.txt
+[0.774s] writing requirements to disaster_response_swarm.egg-info/requires.txt
+[0.774s] writing top-level names to disaster_response_swarm.egg-info/top_level.txt
+[0.774s] writing manifest file 'disaster_response_swarm.egg-info/SOURCES.txt'
+[0.776s] reading manifest file 'disaster_response_swarm.egg-info/SOURCES.txt'
+[0.777s] writing manifest file 'disaster_response_swarm.egg-info/SOURCES.txt'
+[0.778s] running build_ext
+[0.778s] Creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages/disaster-response-swarm.egg-link (link to .)
+[0.778s] Installing graph_construction_node script to /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/lib/disaster_response_swarm
+[0.779s] Installing initial_pose_publisher script to /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/lib/disaster_response_swarm
+[0.779s] Installing merge_map_node script to /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/lib/disaster_response_swarm
+[0.779s] Installing spawn_robot_server script to /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/lib/disaster_response_swarm
+[0.779s] 
+[0.779s] Installed /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm
+[0.779s] running symlink_data
+[0.779s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/ament_index
+[0.780s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/ament_index/resource_index
+[0.780s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/ament_index/resource_index/packages
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/resource/disaster_response_swarm -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/ament_index/resource_index/packages
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/package.xml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm
+[0.780s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/fully_integrated_swarm.launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/single_robot_with_namespacing.launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/tb3 _bringup.launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/navigation_launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/single_robot_no_namespacing.launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/tb3_simulation_launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/waffle_camera_launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.780s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/localization_navigation_launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.781s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/slam_with_sim_camera.launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.781s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/launch/real_robot_with_realsense_launch.py -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/launch
+[0.781s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/worlds
+[0.781s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/worlds/disaster_world.world -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/worlds
+[0.781s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/maps
+[0.781s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/maps/map.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/maps
+[0.781s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.781s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/config/nav2_params_backup.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.781s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/config/collision_monitor_params.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.781s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/config/slam_online_async.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/config/rtabmap_params.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/config/nav2_multirobot_params_all.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/config/map_merge_params.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/config/nav2_multirobot_params_all_copy.yaml -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/config
+[0.782s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/urdf
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/urdf/turtlebot3_waffle.urdf -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/urdf
+[0.782s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/models
+[0.782s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/models/turtlebot3_waffle
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/models/turtlebot3_waffle/model-1_4.sdf -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/models/turtlebot3_waffle
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/models/turtlebot3_waffle/model.config -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/models/turtlebot3_waffle
+[0.782s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/models/turtlebot3_waffle/model.sdf -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/models/turtlebot3_waffle
+[0.782s] creating /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/rviz
+[0.783s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/rviz/merge_map.rviz -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/rviz
+[0.783s] symbolically linking /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/rviz/namespaced_rviz_config.rviz -> /home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/share/disaster_response_swarm/rviz
+[0.799s] Invoked command in '/home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm' returned '0': PYTHONPATH=/home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/amix/ros_ws/disaster_response_swarm/install/disaster_response_swarm/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/amix/ros_ws/disaster_response_swarm/build/disaster_response_swarm/build --no-deps symlink_data

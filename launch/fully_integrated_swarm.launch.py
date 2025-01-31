@@ -56,7 +56,7 @@ def generate_launch_description():
     nav2_yaml_file = os.path.join(
         disaster_pkg_dir,
         'config',
-        'nav2_multirobot_params_all.yaml'
+        'nav2_multirobot_params_all_copy.yaml'
     )
 
     rviz_yaml_file = os.path.join(
@@ -133,11 +133,11 @@ def generate_launch_description():
             '<robot_namespace>': robot_namespace
         }
         
-        rewritten_yaml = RewrittenYaml(
-            source_file=nav2_yaml_file,
-            param_rewrites=param_substitutions,
-            convert_types=True
-        )
+        # rewritten_yaml = RewrittenYaml(
+        #     source_file=nav2_yaml_file,
+        #     param_rewrites=param_substitutions,
+        #     convert_types=True
+        # )
 
         # Open the file in read mode
         with open(sdf_file_path, 'r') as file:
@@ -214,25 +214,42 @@ def generate_launch_description():
         # )
 
         robot_nav = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([turtlebot_nav2_prefix]),
+            PythonLaunchDescriptionSource(os.path.join(disaster_pkg_dir,
+                                                        'launch', 
+                                                        'localization_navigation_launch.py')),
             launch_arguments={
-                'slam': 'False',
                 'namespace': robot_namespace,
                 'use_namespace': 'True',
-                'rviz_config': rviz_yaml_file,
-                'map' : map_yaml_file,
-                'autostart': 'True',
+                'map': map_yaml_file,
                 'use_sim_time': use_sim_time,
-                'params_file' : rewritten_yaml,
+                'params_file': nav2_yaml_file,
+                'autostart': 'True',
                 'use_composition': 'False',
+                'container_name': 'nav2_container',
                 'use_respawn': 'False',
-                'use_simulator': 'False',
-                'spawn': 'False',                        #added to condition spawn
-                'use_robot_state_pub': 'False',
-                'use_rviz': 'False',
-                'headless': 'False'
             }.items()
         )
+
+        # robot_nav = IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource([turtlebot_nav2_prefix]),
+        #     launch_arguments={
+        #         'slam': 'False',
+        #         'namespace': robot_namespace,
+        #         'use_namespace': 'True',
+        #         'rviz_config': rviz_yaml_file,
+        #         'map' : map_yaml_file,
+        #         'autostart': 'True',
+        #         'use_sim_time': use_sim_time,
+        #         'params_file' : rewritten_yaml,
+        #         'use_composition': 'True',
+        #         'use_respawn': 'False',
+        #         'use_simulator': 'False',
+        #         'spawn': 'False',                        #added to condition spawn
+        #         'use_robot_state_pub': 'False',
+        #         'use_rviz': 'False',
+        #         'headless': 'False'
+        #     }.items()
+        # )
         
         # lifecycle_manager_cmd = Node(
         #     package='nav2_lifecycle_manager',
@@ -243,15 +260,33 @@ def generate_launch_description():
         #                 {'autostart': True},
         #                 {'node_names': ['amcl']}]
         # )
+
+
         # Robot spawn command with model path
         initial_pose_publisher = Node(
-            package='disaster_response_swarm',  # Replace with your package name
+            package='disaster_response_swarm', 
             executable='initial_pose_publisher',  # The name of your executable
             name='initial_pose_publisher',        # Name of the node
             namespace=robot_namespace,
             output='screen',              # Output to screen
             parameters=[{'robot_namespace': robot_namespace}],
-            remappings=[],
+            remappings=[
+                ("/tf", "tf"),
+                ("/tf_static", "tf_static"),
+            ],
+        )
+
+        graph_construction_node = Node(
+            package='disaster_response_swarm',
+            executable='graph_construction_node',
+            name='unified_path_only_node',
+            namespace=robot_namespace,
+            output='screen',
+            parameters=[{'robot_namespace': robot_namespace}],
+            remappings=[
+                ("/tf", "tf"),
+                ("/tf_static", "tf_static"),
+            ],
         )
 
         start_lifecycle_manager_cmd = Node(
@@ -264,11 +299,11 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time},
                         {'autostart': True},
                         {'node_names': [
-                            # 'amcl',
+                            'amcl',
                             'map_server',
                             'velocity_smoother',
                             'controller_server',
-                            # 'collision_monitor',
+                            'collision_monitor',
                             'planner_server'
                         ]}])
 
@@ -316,10 +351,11 @@ def generate_launch_description():
         robot_ld = GroupAction([
             spawn_entity_cmd,
             rsp_cmd,
-            # initial_pose_publisher,
+            initial_pose_publisher,
             # static_transform_publisher_1,
             # static_transform_publisher_2,
             robot_nav,
+            # graph_construction_node,
             # start_lifecycle_manager_cmd,
             robot_slam,
             robot_rviz
@@ -347,7 +383,7 @@ def generate_launch_description():
             remappings=[],
         )
     
-    simulation_ld.append(merge_map_cmd)
-    simulation_ld.append(map_merge_rviz)
+    # simulation_ld.append(merge_map_cmd)
+    # simulation_ld.append(map_merge_rviz)
 
     return  LaunchDescription(simulation_ld)

@@ -1,70 +1,120 @@
+#!/usr/bin/env python3
+
+import math
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseWithCovarianceStamped
-from nav_msgs.msg import Odometry
 from rclpy.duration import Duration
-import math
 
-
-
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
+from tf2_ros import Buffer, TransformListener, TransformException
+from tf2_geometry_msgs import do_transform_pose
 
 class InitialPosePublisher(Node):
+    """
+    Publishes a single PoseWithCovarianceStamped on /<robot_namespace>/initialpose
+    by transforming the /odom pose into /map frame.
+
+    This version uses do_transform_pose on a geometry_msgs/Pose (not PoseStamped),
+    working around older tf2_geometry_msgs libraries that may cause
+    'PoseStamped object has no attribute position'.
+    """
+
     def __init__(self):
         super().__init__('initial_pose_publisher')
-        
-        # Declare and get the robot namespace parameter
-        self.declare_parameter('robot_namespace', 'robot1')  # Default to 'robot1'
-        self.robot_namespace = self.get_parameter('robot_namespace').get_parameter_value().string_value
-        
-        # Create a publisher for the initialpose topic that AMCL listens to
-        self.initialpose_publisher = self.create_publisher(PoseWithCovarianceStamped, f'/{self.robot_namespace}/initialpose', 10)
-        
-        # Create an odometry subscriber to get the robot's initial pose
-        self.odom_topic = f'/{self.robot_namespace}/odom'  # Use robot namespace for odom topic
-        self.odom_subscriber = self.create_subscription(
+
+        # Declare and acquire namespace parameter if you want multi-robot usage
+        self.declare_parameter('robot_namespace', 'robot1_ns')
+        self.robot_namespace = self.get_parameter('robot_namespace').value
+
+        # Publisher for the initial pose (AMCL listens here)
+        topic = f'/{self.robot_namespace}/initialpose'
+        self.initialpose_pub = self.create_publisher(
+            PoseWithCovarianceStamped,
+            topic,
+            10
+        )
+        self.get_logger().info(f'Publishing initial pose to: {topic}')
+
+        # Subscribe to Odom (robot's local pose)
+        self.odom_topic = f'/{self.robot_namespace}/odom'
+        self.odom_sub = self.create_subscription(
             Odometry,
             self.odom_topic,
             self.odom_callback,
             10
         )
-        
-        # Initialize the initial pose flag
+        self.get_logger().info(f'Subscribed to odometry: {self.odom_topic}')
+
+        # TF Buffer + Listener
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+
+        # Flag to ensure we only publish once
         self.initial_pose_set = False
 
-    # def normalize_quaternion(q):
-    #     norm = math.sqrt(q.x**2 + q.y**2 + q.z**2 + q.w**2)
-    #     return geometry_msgs.msg.Quaternion(
-    #         q.x / norm, q.y / norm, q.z / norm, q.w / norm
-    #     )
+    def odom_callback(self, odom_msg: Odometry):
+        """
+        On first odometry message, transform the robot pose from odom -> map,
+        then publish it as initial pose for AMCL.
+        """
+        if self.initial_pose_set:
+            return  # Already published once
 
-    def odom_callback(self, msg):
-        if not self.initial_pose_set:
-            position = msg.pose.pose.position
-            orientation = msg.pose.pose.orientation
-            
-            if math.isnan(position.x) or math.isnan(position.y) or math.isnan(orientation.x):
-                self.get_logger().warn("Received NaN value in odometry. Skipping pose publication.")
-                return
-            
-            # Create a PoseWithCovarianceStamped message
-            initial_pose_msg = PoseWithCovarianceStamped()
-            initial_pose_msg.header.stamp = self.get_clock().now().to_msg()
-            initial_pose_msg.header.frame_id = 'map'
-            
-            initial_pose_msg.pose.pose.position = position
-            initial_pose_msg.pose.pose.orientation = orientation
-            initial_pose_msg.pose.covariance = [
-                0.5, 0, 0, 0, 0, 0,
-                0, 0.5, 0, 0, 0, 0,
-                0, 0, 0.1, 0, 0, 0,
-                0, 0, 0, 0.1, 0, 0,
-                0, 0, 0, 0, 0.1, 0,
-                0, 0, 0, 0, 0, 0.1
-            ]
-            
-            self.initialpose_publisher.publish(initial_pose_msg)
-            self.initial_pose_set = True
-            self.get_logger().info(f"Initial pose published: {initial_pose_msg.pose.pose}")
+        # Sanity checks
+        pos = odom_msg.pose.pose.position
+        ori = odom_msg.pose.pose.orientation
+        if any(math.isnan(val) for val in [pos.x, pos.y, ori.x, ori.y, ori.z, ori.w]):
+            self.get_logger().warn("Received NaN in odometry. Skipping initial pose publish.")
+            return
+
+        # Attempt TF lookup from 'map' to 'odom'
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                "map",   # as per your snapshot
+                "odom",  # as per your snapshot
+                rclpy.time.Time()
+            )
+        except TransformException as ex:
+            self.get_logger().warn(f'Could not transform odom->map: {ex}')
+            return
+
+        # Extract geometry_msgs/Pose from the Odometry
+        odom_pose = odom_msg.pose.pose  # This is just geometry_msgs/Pose
+
+        # Transform the geometry_msgs/Pose into the map frame
+        try:
+            transformed_pose = do_transform_pose(odom_pose, transform)
+            # do_transform_pose should return another geometry_msgs/Pose if input is a Pose
+        except Exception as ex:
+            self.get_logger().warn(f'Error transforming odom->map pose: {ex}')
+            return
+
+        # Build a PoseWithCovarianceStamped in the map frame
+        initial_pose_msg = PoseWithCovarianceStamped()
+        initial_pose_msg.header.stamp = self.get_clock().now().to_msg()
+        initial_pose_msg.header.frame_id = 'map'
+        initial_pose_msg.pose.pose = transformed_pose
+
+        # Ensure all floats, exactly 36 entries:
+        initial_pose_msg.pose.covariance = [
+            0.5,  0.0, 0.0,  0.0,  0.0,  0.0,
+            0.0,  0.5, 0.0,  0.0,  0.0,  0.0,
+            0.0,  0.0, 0.1,  0.0,  0.0,  0.0,
+            0.0,  0.0, 0.0,  0.1,  0.0,  0.0,
+            0.0,  0.0, 0.0,  0.0,  0.0,  0.1,
+            0.0,  0.0, 0.0,  0.0,  0.0,  0.1
+        ]
+
+
+        self.initialpose_pub.publish(initial_pose_msg)
+        self.initial_pose_set = True
+
+        # For logging, we can check x,y from the transformed_pose
+        self.get_logger().info(
+            f'Published initial pose for [{self.robot_namespace}] in map frame: '
+            f'({transformed_pose.position.x:.2f}, {transformed_pose.position.y:.2f})'
+        )
 
 
 def main(args=None):
