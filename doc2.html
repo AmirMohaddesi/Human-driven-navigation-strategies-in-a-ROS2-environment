@@ -1,45 +1,55 @@
-# Multi-Agent ROS2 Platform Documentation
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started - Multi-Agent ROS2 Platform Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0 auto; max-width: 800px; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        hr { margin: 30px 0; }
+    </style>
+</head>
+<body>
+    <h1>Getting Started</h1>
 
-Welcome to the comprehensive documentation for the Multi-Agent ROS2 Platform, designed specifically for scholars and researchers exploring robotics in disaster response scenarios. Built using ROS2 Humble on Ubuntu 22.04, this platform provides an accessible environment for deploying and managing multiple TurtleBot3 robots for coordinated mapping, navigation, and exploration tasks.
+    <h2>Cloning and Building the Repository</h2>
+    <p>Follow these steps to clone and build the platform:</p>
 
----
-
-## Getting Started
-
-### Cloning and Building the Repository
-Follow these steps to clone and build the platform:
-
-```bash
-mkdir -p ~/ros2_ws/src
+    <pre><code>mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
 git clone https://github.com/AmirMohaddesi/disaster_response_swarm.git  # Replace with your repository URL
 cd ~/ros2_ws
 colcon build --symlink-install
-source install/setup.bash
-```
+source install/setup.bash</code></pre>
 
-### Launching a Multi-Agent Example
-To run a basic multi-agent simulation:
+    <h2>Launching a Multi-Agent Example</h2>
+    <p>To run a basic multi-agent simulation:</p>
 
-```bash
-ros2 launch disaster_response_swarm multi_agent_demo.launch.py
-```
+    <pre><code>ros2 launch disaster_response_swarm multi_agent_demo.launch.py</code></pre>
 
-### Visualization with RViZ
-Launch RViZ to visualize the robots and their sensor data:
+    <h2>Visualization with RViZ</h2>
+    <p>Launch RViZ to visualize the robots and their sensor data:</p>
 
-```bash
-rviz2
-```
+    <pre><code>rviz2</code></pre>
 
-In RViZ, manually add the following displays for comprehensive visualization:
-- Robot Model
-- TF
-- LaserScan
-- Map
+    <p>In RViZ, manually add the following displays for comprehensive visualization:</p>
+    <ul>
+        <li>Robot Model</li>
+        <li>TF</li>
+        <li>LaserScan</li>
+        <li>Map</li>
+    </ul>
 
-Ensure all displays are correctly configured for each robot namespace (e.g., `/tb3_0`).
+    <p>Ensure all displays are correctly configured for each robot namespace (e.g., <code>/tb3_0</code>).</p>
 
----
+    <hr>
 
-Next sections include "Customization Guide," "Advanced Topics," "Contributing," "FAQ and Troubleshooting," and "Contact and Community" for complete platform documentation.
+    <p>Next sections include "Customization Guide," "Advanced Topics," "Contributing," "FAQ and Troubleshooting," and "Contact and Community" for complete platform documentation.</p>
+
+</body>
+</html>
