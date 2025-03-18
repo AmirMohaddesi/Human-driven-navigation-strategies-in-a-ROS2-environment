@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customization Guide - Multi-Agent ROS2 Platform Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0 auto; max-width: 800px; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        hr { margin: 30px 0; }
+    </style>
+</head>
+<body>
+    <h1>Customization Guide</h1>
+
+    <h2>Adjusting Robot Count and Initial Positions</h2>
+    <p>You can easily modify the number of robots and their initial positions by editing the launch file located at <code>multi_agent_demo.launch.py</code>. Look for a configuration section similar to this:</p>
+
+    <pre><code>robots = [
+    {'name': 'tb3_0', 'x_pose': 0.0, 'y_pose': 0.0},
+    {'name': 'tb3_1', 'x_pose': 2.0, 'y_pose': 0.0},
+    # Add more robots as needed
+]</code></pre>
+
+    <h2>SLAM Toolbox Configuration</h2>
+    <p>To customize SLAM parameters, edit the YAML file found in the <code>params/</code> directory, for example <code>slam_params.yaml</code>:</p>
+
+    <pre><code>map_resolution: 0.05
+use_scan_matching: true
+loop_closure_enabled: true</code></pre>
+
+    <h2>Navigation (Nav2) Configuration</h2>
+    <p>For customizing Nav2 behavior, modify parameters in <code>nav2_params.yaml</code> located in the <code>params/</code> directory:</p>
+
+    <pre><code>planner:
+  tolerance: 0.1
+controller:
+  max_velocity: 0.25
+  min_velocity: 0.05</code></pre>
+
+    <h2>Environment and World Setup</h2>
+    <p>Change the Gazebo simulation world by updating the launch argument or directly editing the launch file to specify the world file:</p>
+
+    <pre><code>ros2 launch disaster_response_swarm multi_agent_demo.launch.py world:=<path_to_your.world></code></pre>
+
+    <h2>Best Practices for Configuration Management</h2>
+    <ul>
+        <li>Keep your custom configurations version-controlled using Git.</li>
+        <li>Document all changes clearly within YAML and launch files.</li>
+        <li>Make incremental adjustments and test regularly to easily identify issues.</li>
+    </ul>
+
+    <hr>
+
+    <p>Upcoming sections include "Advanced Topics," "Contributing," "FAQ and Troubleshooting," and "Contact and Community" to complete your documentation.</p>
+
+</body>
+</html>
