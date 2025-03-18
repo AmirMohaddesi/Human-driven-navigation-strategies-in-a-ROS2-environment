@@ -277,3 +277,86 @@ Performance Improvements: As the number of robots grows, performance can become 
 More Tutorials and Examples: We plan to add scenario-specific examples (for instance, “building collapse scenario”, “forest search and rescue scenario”, etc.) with step-by-step tutorials. These will show how to adapt the platform to different use cases. Also, an expanded troubleshooting section in the documentation will be provided, addressing common issues (like robots not spawning, RViZ not showing data, navigation failing, etc.) along with solutions.
 Contributing: We heartily welcome contributions from the community. If you have ideas for improvements or new features, feel free to open an issue on the GitHub repository to discuss them. Bug reports are extremely helpful—if you encounter a problem, please let us know with as much detail as possible so we can fix it. We also accept pull requests: whether it’s for small fixes in documentation or code, or larger additions, we will gladly review them. When contributing code, please follow the style guidelines of the project and test your changes if possible with a simulation run. Feedback: If you’re using this platform for your research or project, we’d love to hear about your experience. Feedback helps us prioritize features and improvements. You can use the GitHub discussions or issue tracker to share your thoughts, or contact the maintainers through the channels listed in the repository.
 Thank you for using the ROS2 Multi-Agent Disaster Response Platform! We hope this documentation helped you get started. The field of multi-robot systems for disaster response is challenging but rewarding, and by working together on open platforms like this, we can accelerate development and deployment of these life-saving technologies. Good luck, and happy robotic exploring!
+
+
+
+
+Multi-Agent ROS2 Platform
+
+This repository provides a ROS2 (Humble) platform for deploying multiple TurtleBot3 robots in simulation, enabling coordinated navigation, SLAM mapping, and exploration tasks. Designed for researchers and scholars in fields outside of computer science, this platform offers an accessible introduction to multi-robot systems using Ubuntu 22.04.
+
+Features
+
+Multiple Robot Simulation: Easily spawn multiple TurtleBot3 agents in Gazebo.
+
+SLAM Toolbox: Real-time simultaneous localization and mapping.
+
+Navigation2 (Nav2): Autonomous navigation capabilities.
+
+Visualization: Comprehensive visualization via RViZ.
+
+Installation Guide
+
+1. ROS2 Humble Installation
+
+Follow ROS2 Humble Installation instructions for Ubuntu 22.04.
+
+2. Dependencies
+
+Run the following commands to install dependencies:
+
+sudo apt update
+sudo apt install ros-humble-desktop ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-slam-toolbox ros-humble-gazebo-* ros-humble-turtlebot3* ros-humble-rviz2
+
+3. Environment Configuration
+
+Add these lines to your ~/.bashrc:
+
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+echo "export TURTLEBOT3_MODEL=waffle" >> ~/.bashrc
+source ~/.bashrc
+
+Clone and Build the Repository
+
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws/src
+git clone https://github.com/AmirMohaddesi/disaster_response_swarm.git  # Update with your repository URL
+cd ~/ros2_ws
+colcon build --symlink-install
+source install/setup.bash
+
+Running a Minimal Example
+
+Launch the multi-agent simulation:
+
+ros2 launch disaster_response_swarm multi_agent_demo.launch.py
+
+Visualization with RViZ
+
+Open another terminal and launch RViZ:
+
+rviz2
+
+In RViZ, add displays for Robot Model, TF, LaserScan, and Map to visualize robot activities.
+
+Customization
+
+Adjusting Robot Count and Initial Positions: Edit the launch file (multi_agent_demo.launch.py) to change the number of robots and their starting poses.
+
+Navigation and SLAM Parameters: Tweak parameters in YAML files located under the params/ directory.
+
+Future updates will include external configuration files for easier customization.
+
+Upcoming Features
+
+Map merging for global coordination
+
+Advanced scenario examples (e.g., disaster sites, collapsed buildings)
+
+Enhanced GUI for simplified configuration
+
+Support for heterogeneous robot teams
+
+Contributing
+
+We encourage contributions! Open issues for suggestions, bugs, or feature requests. Pull requests are warmly welcomed.
