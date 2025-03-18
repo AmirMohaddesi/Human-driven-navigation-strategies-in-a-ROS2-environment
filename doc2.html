@@ -1,0 +1,45 @@
+# Multi-Agent ROS2 Platform Documentation
+
+Welcome to the comprehensive documentation for the Multi-Agent ROS2 Platform, designed specifically for scholars and researchers exploring robotics in disaster response scenarios. Built using ROS2 Humble on Ubuntu 22.04, this platform provides an accessible environment for deploying and managing multiple TurtleBot3 robots for coordinated mapping, navigation, and exploration tasks.
+
+---
+
+## Getting Started
+
+### Cloning and Building the Repository
+Follow these steps to clone and build the platform:
+
+```bash
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws/src
+git clone https://github.com/AmirMohaddesi/disaster_response_swarm.git  # Replace with your repository URL
+cd ~/ros2_ws
+colcon build --symlink-install
+source install/setup.bash
+```
+
+### Launching a Multi-Agent Example
+To run a basic multi-agent simulation:
+
+```bash
+ros2 launch disaster_response_swarm multi_agent_demo.launch.py
+```
+
+### Visualization with RViZ
+Launch RViZ to visualize the robots and their sensor data:
+
+```bash
+rviz2
+```
+
+In RViZ, manually add the following displays for comprehensive visualization:
+- Robot Model
+- TF
+- LaserScan
+- Map
+
+Ensure all displays are correctly configured for each robot namespace (e.g., `/tb3_0`).
+
+---
+
+Next sections include "Customization Guide," "Advanced Topics," "Contributing," "FAQ and Troubleshooting," and "Contact and Community" for complete platform documentation.
