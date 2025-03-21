@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contributing - Multi-Agent ROS2 Platform Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0 auto; max-width: 800px; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        hr { margin: 30px 0; }
+    </style>
+</head>
+<body>
+    <h1>Contributing</h1>
+
+    <h2>How to Report Issues</h2>
+    <p>If you encounter issues, bugs, or unexpected behavior, please report them by opening a new issue on our GitHub repository. Include the following details:</p>
+    <ul>
+        <li>Clear description of the issue</li>
+        <li>Steps to reproduce the problem</li>
+        <li>Relevant logs and screenshots if possible</li>
+        <li>Your environment setup (ROS2 version, Ubuntu version, etc.)</li>
+    </ul>
+
+    <h2>Requesting Features</h2>
+    <p>If you have suggestions for new features or improvements, we encourage you to submit a feature request through GitHub issues. Clearly describe your idea and its potential benefits to the community.</p>
+
+    <h2>Contribution Guidelines</h2>
+    <p>We warmly welcome contributions! Please follow these guidelines when submitting changes:</p>
+    <ul>
+        <li>Fork the repository and create a feature branch.</li>
+        <li>Keep your changes focused and manageable.</li>
+        <li>Clearly document your code and include inline comments where necessary.</li>
+        <li>Test your changes thoroughly before submitting a pull request.</li>
+        <li>Ensure your code adheres to the project's coding standards and style guidelines.</li>
+    </ul>
+
+    <h2>Review Process</h2>
+    <p>All pull requests will be reviewed by maintainers. Feedback or suggestions may be provided to align contributions with the project's goals and quality standards. Be responsive and patient throughout this collaborative process.</p>
+
+    <hr>
+
+    <p>Upcoming sections include "FAQ and Troubleshooting," and "Contact and Community" to complete your documentation.</p>
+
+</body>
+</html>
