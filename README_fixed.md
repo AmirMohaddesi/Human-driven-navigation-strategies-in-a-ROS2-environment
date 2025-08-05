@@ -8,7 +8,7 @@ A **ROS 2 (Humble Hawksbill)** multi-robot simulation platform for disaster resp
 Deploy multiple [TurtleBot3](https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/) robots in **Gazebo** to perform:
 
 - Simultaneous Localization and Mapping ([SLAM Toolbox](https://github.com/SteveMacenski/slam_toolbox))
-- Autonomous Navigation ([Navigation2](https://navigation.ros.org/))
+- Autonomous Navigation ([Navigation2](https://docs.nav2.org/))
 - Coordinated multi-agent exploration
 
 Designed to be **accessible to researchers**, even with minimal ROS2 or Ubuntu experience.
