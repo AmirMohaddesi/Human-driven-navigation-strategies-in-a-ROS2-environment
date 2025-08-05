@@ -37,6 +37,9 @@ Deploy multiple [TurtleBot3](https://emanual.robotis.com/docs/en/platform/turtle
 | **Visualization**              | TF trees, robot models, maps, and sensor data in RViz |
 
 ---
+## Documentation
+
+This pacckage full documentation can be found at ([here](https://amirmohaddesi.github.io/Human-driven-navigation-strategies-in-a-ROS2-environment/))
 
 ## Installation
 
