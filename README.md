@@ -4,6 +4,14 @@
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=nfTs7sWDnww" target="_blank">
+    <img src="https://img.youtube.com/vi/nfTs7sWDnww/maxresdefault.jpg"
+         alt="Watch ROS2 Multi-Agent Disaster Response Platform Demo" width="720" style="border-radius:12px;">
+  </a>
+</p>
+
+
 A **ROS 2 (Humble Hawksbill)** multi-robot simulation platform for disaster response scenarios.  
 Deploy multiple [TurtleBot3](https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/) robots in **Gazebo** to perform:
 
