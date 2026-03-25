@@ -17,9 +17,6 @@ from ament_index_python.packages import get_package_share_directory
 from nav2_common.launch import RewrittenYaml
 
 
-
-import os
-
 def generate_launch_description():
     
         # Get the urdf file

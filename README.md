@@ -3,7 +3,7 @@
 **Main entrypoint (after build):** `ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py`  
 Set `export TURTLEBOT3_MODEL=waffle` first.
 
-ROS 2 **Humble** simulation stack: **two** TurtleBot3-class robots in Gazebo, each with **SLAM Toolbox** and **Navigation2**, plus a **central** `merge_map_node` that fuses per-robot SLAM maps into `/merged_map` for shared situational awareness in RViz.
+ROS 2 **Humble** simulation stack: **two** TurtleBot3-class robots in Gazebo (default world: **`turtlebot3_house`** from `turtlebot3_gazebo`, matching upstream Nav2 sim bringup), each with **SLAM Toolbox** and **Navigation2**, plus a **central** `merge_map_node` that fuses per-robot SLAM maps into `/merged_map` for shared situational awareness in RViz. An optional custom world file lives at `worlds/disaster_world.world` if you wire it into your launch.
 
 Demo: [YouTube](https://www.youtube.com/watch?v=nfTs7sWDnww)
 
@@ -127,7 +127,7 @@ ros2 run disaster_response_swarm yolo_detection_node \
 - Credible robotics narrative for interviews: namespaces, TF, costmaps, SLAM outputs, and a real merge consumer in RViz.
 
 ## Limitations (honest)
-- **Simulation-first**; tuned for Gazebo + this package’s launch wiring.
+- **Simulation-first**; tuned for Gazebo + this package’s launch wiring (default **TurtleBot3 house** world, not `disaster_world.world`, unless you change the launch).
 - **`/merged_map` is not** the default Nav2 global map input; per-robot Nav2 still uses the map YAML from bringup—merge is mainly for shared awareness / analysis in RViz.
 - **YOLO** is optional and needs external weights/cfg.
 - **`graph_construction_node`** is off in the default integrated launch; enable explicitly if you want `survey_markers`.

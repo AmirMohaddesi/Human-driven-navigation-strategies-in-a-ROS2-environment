@@ -11,6 +11,12 @@ __pycache__/
 # Runtime/generated files
 tmp/
 
+# Local shell copies / accidents (never commit)
+systembashrc
+
+# Python test cache (local only)
+.pytest_cache/
+
 # Generated documentation artifacts (keep source in `docs/`)
 docs*.html
 docs5
