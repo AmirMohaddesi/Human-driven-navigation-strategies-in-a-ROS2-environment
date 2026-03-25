@@ -18,36 +18,38 @@ The result is a realistic robotics workflow: decentralized autonomy + centralize
 ## Architecture (quick diagram)
 
 ```text
-                 (ROS topics + TF per namespace)
-   Gazebo World
-        |
-        +--------------------------+--------------------------+
-        |                          |                          |
-   robot1_ns                     robot2_ns                  (optional sensors)
-        |                          |
-        |   SLAM Toolbox           |   SLAM Toolbox
-        |   publishes             |   publishes
-        |   /robot1_ns/local_map|   /robot2_ns/local_map
-        |                          |
-        |   Nav2 (autonomy)      |   Nav2 (autonomy)
-        |   plans locally         |   plans locally
-        |   using map YAML       |   using map YAML
-        +------------+-------------+------------+-------------+
-                     |                            |
-                     |     centralized coordination
-                     v
-              merge_map_node
-                 publishes
-               /merged_map
-                     |
-                     v
-                  RViz
-
- graph_construction_node (one per robot namespace)
-   listens to /<robot_namespace>/map + /<robot_namespace>/amcl_pose
-   calls Nav2 ComputePathToPose
-   publishes markers on /<robot_namespace>/survey_markers
+                          Gazebo world
+                               |
+                               v
+          +--------------------+--------------------+
+          |                                         |
+       robot1_ns                                robot2_ns
+          |                                         |
+          |   SLAM Toolbox                          |   SLAM Toolbox
+          |   publishes local maps                  |   publishes local maps
+          |   (/robotX_ns/local_map)               |   (/robotX_ns/local_map)
+          |                                         |
+          |   Nav2 (navigation autonomy)           |   Nav2 (navigation autonomy)
+          |   publishes /robotX_ns/map            |   publishes /robotX_ns/map
+          |   and /robotX_ns/amcl_pose           |   and /robotX_ns/amcl_pose
+          |                                         |
+          |   graph_construction_node            |   graph_construction_node
+          |   - reads /robotX_ns/map            |   - reads /robotX_ns/map
+          |   - reads /robotX_ns/amcl_pose     |   - reads /robotX_ns/amcl_pose
+          |   - calls Nav2 ComputePathToPose  |   - calls Nav2 ComputePathToPose
+          |   - publishes /robotX_ns/survey_markers
+          +--------------------+--------------------+
+                               |
+                               v
+                      merge_map_node
+                 (fuses local maps -> /merged_map)
+                               |
+                               v
+                              RViz
+                    (visualizes /merged_map)
 ```
+
+Each robot runs SLAM Toolbox + Nav2 in its own namespace (decentralized autonomy), while `merge_map_node` centrally fuses the SLAM-produced local maps into `/merged_map` for shared visualization. `graph_construction_node` exists per namespace and uses the robot’s map + AMCL pose to request feasible paths from Nav2, publishing `/<robot_namespace>/survey_markers` for inspection.
 
 ## Key Features
 - Multi-robot simulation in Gazebo with per-robot namespaces.
