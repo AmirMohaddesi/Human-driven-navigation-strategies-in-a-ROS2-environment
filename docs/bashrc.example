@@ -1,0 +1,12 @@
+# Example bashrc snippet for ROS 2 Humble + Gazebo (Linux/WSL)
+#
+# Copy the lines you need into your own `~/.bashrc`.
+
+source /opt/ros/humble/setup.bash
+
+# Common Gazebo + ROS env
+export TURTLEBOT3_MODEL=${TURTLEBOT3_MODEL:-waffle}
+
+# If you use ROS workspaces with colcon:
+# source ~/ros2_ws/install/setup.bash
+

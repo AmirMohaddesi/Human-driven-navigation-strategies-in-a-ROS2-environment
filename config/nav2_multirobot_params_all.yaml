@@ -281,7 +281,7 @@ map_server:
     use_sim_time: True
     frame_id: map
     topic_name: <robot_namespace>/map
-    yaml_filename: "/home/amix/ros_ws/disaster_response_swarm/maps/map.yaml"
+    yaml_filename: ""
 
 map_saver:
   ros__parameters:

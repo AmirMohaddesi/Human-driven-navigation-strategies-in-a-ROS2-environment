@@ -10,11 +10,16 @@ to help you get the most out of the platform.
 
 ```bash
 sudo apt update
-sudo apt install ros-humble-desktop   ros-humble-navigation2   ros-humble-slam-toolbox   ros-humble-turtlebot3*   ros-humble-rviz2
+sudo apt install ros-humble-desktop \
+  ros-humble-nav2-bringup \
+  ros-humble-slam-toolbox \
+  ros-humble-gazebo-* \
+  ros-humble-turtlebot3* \
+  ros-humble-rviz2
 
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
-git clone https://github.com/AmirMohaddesi/disaster_response_swarm.git
+git clone https://github.com/AmirMohaddesi/Human-driven-navigation-strategies-in-a-ROS2-environment.git
 cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash

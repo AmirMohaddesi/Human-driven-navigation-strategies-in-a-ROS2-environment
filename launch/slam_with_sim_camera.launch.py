@@ -11,11 +11,19 @@ def generate_launch_description():
     gazebo_ros_pkg_dir = get_package_share_directory('gazebo_ros')
     turtlebot3_gazebo_pkg_dir = get_package_share_directory('turtlebot3_gazebo')
     disaster_pkg_dir = get_package_share_directory('disaster_response_swarm')
-    models_path = '/home/hsr/disaster_response_swarm/models/burgerplus.sdf'
+
+    # Pick a model shipped with this repository (no environment-specific paths).
+    model_candidates = [
+        os.path.join(disaster_pkg_dir, 'models', 'turtlebot3_waffle_pi', 'model.sdf'),
+        os.path.join(disaster_pkg_dir, 'models', 'turtlebot3_waffle', 'model.sdf'),
+    ]
+    models_path = next((p for p in model_candidates if os.path.isfile(p)), model_candidates[0])
     
     # Verify the model path exists
     if not os.path.isfile(models_path):
-        raise FileNotFoundError(f"Model file does not exist: {models_path}")
+        raise FileNotFoundError(
+            f"Could not find a TurtleBot3 model SDF in the repository. Tried: {model_candidates}"
+        )
     
     world_file = os.path.join(turtlebot3_gazebo_pkg_dir, 'worlds', 'turtlebot3_house.world')
 
@@ -41,7 +49,8 @@ def generate_launch_description():
         description='Absolute path to the model .sdf file'
     )
 
-    rviz_config_path = os.path.join(disaster_pkg_dir, 'rviz', 'rtabmap_visualization.rviz')
+    # Reuse a namespace-aware RViz config shipped with the repo.
+    rviz_config_path = os.path.join(disaster_pkg_dir, 'rviz', 'namespaced_rviz_config.rviz')
 
     # Gazebo server launch
     gzserver_cmd = IncludeLaunchDescription(

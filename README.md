@@ -1,153 +1,145 @@
-# ROS2 Multi-Agent Disaster Response Platform 🚨🤖
+# ROS 2 Multi-Agent Disaster Response Platform
 
-![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)
-![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
+A ROS 2 (Humble) multi-robot simulation platform for disaster response scenarios, built around:
+- Gazebo (multi-robot TurtleBot3 in isolated namespaces)
+- SLAM Toolbox (per-robot mapping/localization)
+- Navigation2 (Nav2) (per-robot autonomy)
+- Map merging (publishes a merged occupancy grid for multi-robot analysis)
 
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=nfTs7sWDnww" target="_blank">
-    <img src="https://img.youtube.com/vi/nfTs7sWDnww/maxresdefault.jpg"
-         alt="Watch ROS2 Multi-Agent Disaster Response Platform Demo" width="720" style="border-radius:12px;">
-  </a>
-</p>
+Demo video: [YouTube](https://www.youtube.com/watch?v=nfTs7sWDnww)
 
+## System Overview
+Two TurtleBot3 robots are spawned in Gazebo (2 robots: `robot1_ns` and `robot2_ns`) and run **SLAM Toolbox** plus **Nav2** independently in their own ROS namespaces.
+Each robot builds a local occupancy grid while Nav2 plans locally on its map.
+A dedicated `merge_map_node` coordinates multi-robot understanding by fusing the per-robot maps into a shared `/merged_map` for global visualization/analysis.
+“Human-driven navigation strategies” in this codebase means strategy-like landmark/path selection from **map-derived free space** and validating candidate routes using Nav2 path planning.
+The result is a realistic robotics workflow: decentralized autonomy + centralized coordination for shared situational awareness.
 
-A **ROS 2 (Humble Hawksbill)** multi-robot simulation platform for disaster response scenarios.  
-Deploy multiple [TurtleBot3](https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/) robots in **Gazebo** to perform:
+## Architecture (quick diagram)
 
-- Simultaneous Localization and Mapping ([SLAM Toolbox](https://github.com/SteveMacenski/slam_toolbox))
-- Autonomous Navigation ([Navigation2](https://docs.nav2.org/))
-- Coordinated multi-agent exploration with **map merging**
-- YOLO-based vision detection for object recognition in disaster zones
+```text
+                 (ROS topics + TF per namespace)
+   Gazebo World
+        |
+        +--------------------------+--------------------------+
+        |                          |                          |
+   robot1_ns                     robot2_ns                  (optional sensors)
+        |                          |
+        |   SLAM Toolbox           |   SLAM Toolbox
+        |   publishes             |   publishes
+        |   /robot1_ns/local_map|   /robot2_ns/local_map
+        |                          |
+        |   Nav2 (autonomy)      |   Nav2 (autonomy)
+        |   plans locally         |   plans locally
+        |   using map YAML       |   using map YAML
+        +------------+-------------+------------+-------------+
+                     |                            |
+                     |     centralized coordination
+                     v
+              merge_map_node
+                 publishes
+               /merged_map
+                     |
+                     v
+                  RViz
 
----
+ graph_construction_node (one per robot namespace)
+   listens to /<robot_namespace>/map + /<robot_namespace>/amcl_pose
+   calls Nav2 ComputePathToPose
+   publishes markers on /<robot_namespace>/survey_markers
+```
 
-## 📖 Table of Contents
-- [Features](#features)
-- [Installation](#installation)
-- [Running the Simulation](#running-the-simulation)
-- [Visualization](#visualization)
-- [Customization](#customization)
-- [Upcoming Features](#upcoming-features)
-- [Contributing](#contributing)
-- [License](#license)
+## Key Features
+- Multi-robot simulation in Gazebo with per-robot namespaces.
+- Per-robot SLAM + Nav2 bringup.
+- `merge_map_node`: merges per-robot local maps into a single occupancy grid topic: `/merged_map`.
+- `graph_construction_node`: a unified path-planning test node that publishes visualization markers on `/<robot_namespace>/survey_markers` after calling Nav2’s `ComputePathToPose`.
 
----
+## Requirements
+- Ubuntu 22.04 + ROS 2 Humble (or ROS 2 Humble on WSL2 with Gazebo support)
+- Gazebo + ROS 2 integration packages
+- TurtleBot3 simulation packages
+- Nav2 bringup packages
 
-## ✨ Features
-| Capability                     | Description |
-|--------------------------------|-------------|
-| **Multi-Robot Simulation**     | Spawn multiple TurtleBot3 agents in Gazebo with isolated namespaces |
-| **SLAM Toolbox**               | Real-time mapping from LIDAR data |
-| **Navigation2 (Nav2)**         | Autonomous path planning and obstacle avoidance |
-| **Map Merging**                | Combine maps from multiple robots into a single global map |
-| **YOLO Detection**             | Vision-based object detection for identifying hazards or victims |
-| **Visualization**              | TF trees, robot models, maps, and sensor data in RViz |
+> This repository is meant to be used in simulation. ROS 2 packages like `nav2_bringup`, `slam_toolbox`, and `turtlebot3_gazebo` must be installed from apt.
 
----
-## Documentation
+## How to run in 2 minutes
+Assuming you already built the workspace once with the Quickstart below, run:
 
-This pacckage full documentation can be found at ([here](https://amirmohaddesi.github.io/Human-driven-navigation-strategies-in-a-ROS2-environment/))
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ros2_ws
+source install/setup.bash
 
-## Installation
+export TURTLEBOT3_MODEL=waffle
+ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py
+```
 
-**Tested on:** Ubuntu 22.04 + ROS 2 Humble
+Expected result (what you’ll see):
+- Gazebo starts and spawns **two robots** (`robot1_ns`, `robot2_ns`).
+- RViz starts and shows navigation/SLAM visualization; `merge_map_node` publishes a merged view on `/merged_map`.
+- `graph_construction_node` publishes marker arrays you can inspect at:
+  - `/robot1_ns/survey_markers`
+  - `/robot2_ns/survey_markers`
 
-### 1️⃣ Install ROS 2 Humble
-Follow the [official ROS 2 Humble installation guide](https://docs.ros.org/en/humble/Installation.html)  
-Or run:
+## Quickstart (Build + Run)
 
+### 1) Install ROS 2 and dependencies (apt)
 ```bash
 sudo apt update
-sudo apt install ros-humble-desktop
+sudo apt install ros-humble-desktop \
+  ros-humble-nav2-bringup \
+  ros-humble-slam-toolbox \
+  ros-humble-gazebo-* \
+  ros-humble-turtlebot3* \
+  ros-humble-rviz2
 ```
 
-### 2️⃣ Install dependencies
-```bash
-sudo apt install   ros-humble-navigation2   ros-humble-nav2-bringup   ros-humble-slam-toolbox   ros-humble-gazebo-*   ros-humble-turtlebot3*   ros-humble-rviz2
-```
-
-### 3️⃣ Environment configuration
-Add to your `~/.bashrc`:
-```bash
-echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-echo "export TURTLEBOT3_MODEL=waffle" >> ~/.bashrc
-source ~/.bashrc
-```
-
----
-
-## Running the Simulation
-
-### 1️⃣ Clone and build
+### 2) Build this package with colcon
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
-git clone https://github.com/AmirMohaddesi/disaster_response_swarm.git
+git clone https://github.com/AmirMohaddesi/Human-driven-navigation-strategies-in-a-ROS2-environment.git
 cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-### 2️⃣ Launch the fully integrated swarm
+### 3) Run the full integrated multi-robot simulation
 ```bash
+export TURTLEBOT3_MODEL=waffle
 ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py
 ```
-This will:
-- Spawn multiple robots in **Gazebo**
-- Start SLAM + Nav2 for each robot
-- Enable **map merging** to combine their maps
-- Assign unique namespaces (`/tb3_0`, `/tb3_1`, …)
 
----
+## Optional: YOLO Vision Detection Node
+The repo includes a `yolo_detection_node`, but **YOLOv3 weights/config are not shipped in this repository**.
 
-## Visualization
-
-Launch RViz with the provided multi-robot config:
+To run it, download the YOLOv3 weights + cfg files yourself, then point the node at them:
 ```bash
-rviz2 -d src/disaster_response_swarm/rviz/merge_map.rviz
+ros2 run disaster_response_swarm yolo_detection_node \
+  --ros-args \
+  -p weights_path:=/path/to/yolov3.weights \
+  -p cfg_path:=/path/to/yolov3.cfg \
+  -p display:=false
 ```
-**Suggested displays**:
-- **TF**: View transforms per robot namespace
-- **RobotModel**: Show 3D models (`/tb3_X/robot_description`)
-- **LaserScan**: View LIDAR scans (`/tb3_X/scan`)
-- **Map**: Global map from merged SLAM data (`/map`)
 
----
+## What makes this interesting
+- Multi-robot coordination is explicit: **decentralized** SLAM+Nav2 runs per robot namespace, while a **centralized** `merge_map_node` produces `/merged_map` for shared situational awareness.
+- The “strategy” layer is map-driven and robotics-realistic: `graph_construction_node` treats **free-space landmark candidates** as human-like waypoints, then verifies feasibility by calling Nav2’s `ComputePathToPose` rather than “guessing” motion.
+- This makes it easier to evaluate human-inspired navigation ideas in simulation with real-time TF, costmaps, and localization feedback.
 
-## Customization
+## Limitations (honest)
+- Simulation-first: launches target Gazebo workflows and the provided RViz configs.
+- YOLO is optional/experimental: detections are disabled unless you provide YOLOv3 weights + cfg via ROS parameters.
+- Map merging is primarily for shared visualization/analysis; the default Nav2 bringup still consumes the map YAML passed to Nav2 for each robot (merged map is not a fully end-to-end planning input).
 
-| What to change              | How to do it |
-|-----------------------------|--------------|
-| **Number of robots**        | Edit `fully_integrated_swarm.launch.py` robot list |
-| **Start positions**         | Modify pose parameters in launch file |
-| **SLAM/Nav2 parameters**    | Adjust YAML files in `config/` |
-| **Robot model**             | Change `TURTLEBOT3_MODEL` to `burger` or `waffle` |
-| **Vision detection**        | Configure `disaster_response_swarm/vision/yolo_detection_node.py` |
-
----
-
-## Upcoming Features
-- Enhanced disaster world environments (`worlds/disaster_world.world`)
-- GUI for easier configuration
-- Support for heterogeneous robot teams (ground + aerial)
-- Improved victim detection with multimodal sensors
-
----
-
-## Contributing
-We welcome:
-- Feature suggestions
-- Bug reports
-- Pull requests
-
-Please open an [issue](https://github.com/AmirMohaddesi/disaster_response_swarm/issues) before major changes.
-
----
+## Documentation
+In-repo docs (architecture, launch files, parameters, troubleshooting):
+- `docs/index.md`
+- `docs/installation.md`
+- `docs/architecture.md`
+- `docs/launch_files.md`
 
 ## License
-This project is licensed under the [MIT License](LICENSE).
+Apache License 2.0. See `LICENSE`.
 
----
-
-**Happy exploring — and may your robots always find the safest path!**

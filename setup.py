@@ -20,7 +20,14 @@ setup(
         (os.path.join('share', package_name, 'models/turtlebot3_waffle'), glob(os.path.join('models', 'turtlebot3_waffle', '*'))),
         (os.path.join('share', package_name, 'rviz'), glob(os.path.join('rviz', '*.rviz'))),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'numpy',
+        'networkx',
+        'scipy',
+        # Headless build keeps the dependency installable on CI/servers.
+        'opencv-python-headless',
+    ],
     zip_safe=True,
     maintainer='Seyed Amirhosein Mohaddesi',
     maintainer_email='smohadde@uci.edu',
@@ -32,7 +39,9 @@ setup(
             'spawn_robot_server = disaster_response_swarm.spawn_robot_server:main',
             'merge_map_node = disaster_response_swarm.merge_map_node:main',
             'graph_construction_node = disaster_response_swarm.graph_construction_node:main',
-            'initial_pose_publisher = disaster_response_swarm.initial_pose_publisher:main'
+            'initial_pose_publisher = disaster_response_swarm.initial_pose_publisher:main',
+            'yolo_detection_node = disaster_response_swarm.vision.yolo_detection_node:main',
+            'image_processor = disaster_response_swarm.vision.image_processor:main',
         ],
     },
 )   

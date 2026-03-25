@@ -18,7 +18,11 @@ sudo apt install ros-humble-desktop
 
 2. Install dependencies:
 ```bash
-sudo apt install ros-humble-navigation2 ros-humble-nav2-bringup   ros-humble-slam-toolbox ros-humble-gazebo-* ros-humble-turtlebot3* ros-humble-rviz2
+sudo apt install ros-humble-nav2-bringup \
+  ros-humble-slam-toolbox \
+  ros-humble-gazebo-* \
+  ros-humble-turtlebot3* \
+  ros-humble-rviz2
 ```
 
 3. Configure environment variables:
@@ -32,7 +36,7 @@ source ~/.bashrc
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
-git clone https://github.com/AmirMohaddesi/disaster_response_swarm.git
+git clone https://github.com/AmirMohaddesi/Human-driven-navigation-strategies-in-a-ROS2-environment.git
 cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash

@@ -2,3 +2,15 @@
 .drs_key.pub
 install/
 build/
+log/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Runtime/generated files
+tmp/
+
+# Generated documentation artifacts (keep source in `docs/`)
+docs*.html
+docs5

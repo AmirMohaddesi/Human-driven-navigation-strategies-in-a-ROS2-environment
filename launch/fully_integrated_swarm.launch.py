@@ -5,6 +5,7 @@
 # from ament_index_python.packages import get_package_share_directory
 # from launch_ros.actions import Node
 import os
+import tempfile
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, GroupAction, ExecuteProcess
 
@@ -22,7 +23,7 @@ import os
 def generate_launch_description():
     
         # Get the urdf file
-    TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
+    TURTLEBOT3_MODEL = os.environ.get('TURTLEBOT3_MODEL', 'waffle')
     model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
     
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
@@ -77,11 +78,18 @@ def generate_launch_description():
         'map_merge_params.yaml'
     )
 
+    map_save_dir = os.path.join(
+        os.path.expanduser('~'),
+        '.cache',
+        'disaster_response_swarm',
+        'tmp',
+    )
+    os.makedirs(map_save_dir, exist_ok=True)
     
     map_yaml_file = os.path.join(
-        '/home/amix/ros_ws/disaster_response_swarm/',
+        disaster_pkg_dir,
         'maps',
-        'map.yaml'
+        'map.yaml',
     )
 
     # Remapping topics for each robot
@@ -148,9 +156,13 @@ def generate_launch_description():
         new_content = file_content.replace('<robot_namespace>', robot_namespace)
 
         # Open the file in write mode and write the new content
-        new_sdf_file = 'models/' + robot_namespace + '_model.sdf'
-        with open(new_sdf_file, 'w') as file:
-            file.write(new_content)
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix=f'_{robot_namespace}_model.sdf',
+            delete=False,
+        ) as tmp:
+            tmp.write(new_content)
+            new_sdf_file = tmp.name
 
         # Robot spawn command with model path
         spawn_entity_cmd = ExecuteProcess(
@@ -332,7 +344,7 @@ def generate_launch_description():
                 'save_map_time': 0.0,  # Disable automatic map saving
                 'lifetime': 3600.0,  # Keep the map data alive for 1 hour
                 'publish_rate': 2.0,  # Publish the map at 2 Hz
-                'map_save_dir': '/home/amix/ros_ws/disaster_response_swarm/tmp',  # Save maps to a different directory
+                'map_save_dir': map_save_dir,
                 }
             ],
             remappings=[
@@ -383,7 +395,7 @@ def generate_launch_description():
             remappings=[],
         )
     
-    # simulation_ld.append(merge_map_cmd)
-    # simulation_ld.append(map_merge_rviz)
+    simulation_ld.append(merge_map_cmd)
+    simulation_ld.append(map_merge_rviz)
 
     return  LaunchDescription(simulation_ld)

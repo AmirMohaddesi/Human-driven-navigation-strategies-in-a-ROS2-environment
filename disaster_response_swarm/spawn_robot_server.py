@@ -38,7 +38,8 @@ def main():
     for plugin in root.iter('plugin'):
         for child in plugin:
             if child.tag in {'topic', 'remapping'}:
-                child.text = namespace_prefix + child.text
+                if child.text:
+                    child.text = namespace_prefix + child.text
         ros_params = plugin.find('ros')
         if ros_params is None:
             ros_params = ET.SubElement(plugin, 'ros')
@@ -79,12 +80,13 @@ def main():
         node.get_logger().info("...connected!")
     
     urdf_file_path = args.robot_urdf
-    print('aaaaaaaaaaaaaaaaaaaa '+ str(urdf_file_path))
+    node.get_logger().info(f'Using robot description file: {urdf_file_path}')
 
     # Set data for request
     request = SpawnEntity.Request()
     request.name = args.robot_name
-    request.xml = open(args.robot_urdf, 'r').read()
+    with open(args.robot_urdf, 'r', encoding='utf-8') as f:
+        request.xml = f.read()
     request.robot_namespace = args.robot_namespace
     request.initial_pose.position.x = args.x
     request.initial_pose.position.y = args.y
@@ -94,11 +96,10 @@ def main():
     node.get_logger().info("Sending service request to `/spawn_entity`")
     future = client.call_async(request)
     rclpy.spin_until_future_complete(node, future)
-    if future.result() is not None:
-        print('response: %r' % future.result())
-    else:
-        raise RuntimeError(
-            'exception while calling service: %r' % future.exception())
+    result = future.result()
+    if result is None:
+        raise RuntimeError(f'Exception while calling `/spawn_entity`: {future.exception()}')
+    node.get_logger().info(f'Spawn response: {result}')
 
     node.get_logger().info("Done! [Shutting] down node.")
     node.destroy_node()
