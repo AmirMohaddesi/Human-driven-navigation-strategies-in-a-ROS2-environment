@@ -27,17 +27,17 @@ The result is a realistic robotics workflow: decentralized autonomy + centralize
           |                                         |
           |   SLAM Toolbox                          |   SLAM Toolbox
           |   publishes local maps                  |   publishes local maps
-          |   (/robotX_ns/local_map)                |   (/robotX_ns/local_map)
+          |   (/robot1_ns/local_map)                |   (/robot2_ns/local_map)
           |                                         |
           |   Nav2 (navigation autonomy)            |   Nav2 (navigation autonomy)
-          |   publishes /robotX_ns/map              |   publishes /robotX_ns/map
-          |   and /robotX_ns/amcl_pose              |   and /robotX_ns/amcl_pose
+          |   publishes /robot1_ns/map              |   publishes /robot2_ns/map
+          |   and /robot1_ns/amcl_pose              |   and /robot2_ns/amcl_pose
           |                                         |
           |   graph_construction_node               |   graph_construction_node
-          |   - reads /robotX_ns/map                |   - reads /robotX_ns/map
-          |   - reads /robotX_ns/amcl_pose          |   - reads /robotX_ns/amcl_pose
+          |   - reads /robot1_ns/map                |   - reads /robot2_ns/map
+          |   - reads /robot1_ns/amcl_pose          |   - reads /robot2_ns/amcl_pose
           |   - calls Nav2 ComputePathToPose        |   - calls Nav2 ComputePathToPose
-          |   - publishes /robotX_ns/survey_markers
+          |   - publishes /robot1_ns/survey_markers
           +--------------------+--------------------+
                                |
                                v
