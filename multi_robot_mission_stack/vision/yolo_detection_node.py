@@ -33,7 +33,7 @@ class YOLODetectionNode(Node):
         if not weights_path or not cfg_path:
             # Repo does not ship YOLOv3 weights by default; try a conventional
             # package-local location but allow users to override.
-            pkg_share = get_package_share_directory('disaster_response_swarm')
+            pkg_share = get_package_share_directory('multi_robot_mission_stack')
             weights_path = weights_path or os.path.join(pkg_share, 'vision', 'yolov3.weights')
             cfg_path = cfg_path or os.path.join(pkg_share, 'vision', 'yolov3.cfg')
 

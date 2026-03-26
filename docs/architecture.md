@@ -1,6 +1,6 @@
 # Architecture Overview
 
-The **disaster_response_swarm** platform consists of several ROS 2 nodes and launch files enabling 
+The **multi_robot_mission_stack** platform consists of several ROS 2 nodes and launch files enabling
 multi-robot SLAM, navigation, and map merging.
 
 ## Components

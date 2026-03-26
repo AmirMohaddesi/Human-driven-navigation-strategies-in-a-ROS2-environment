@@ -26,13 +26,13 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
     gazebo_ros_pkg_dir = get_package_share_directory('gazebo_ros')
-    disaster_pkg_dir = get_package_share_directory('disaster_response_swarm')
+    mission_stack_pkg_dir = get_package_share_directory('multi_robot_mission_stack')
     turtlebot3_gazebo_dir = get_package_share_directory('turtlebot3_gazebo')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     world_file = os.path.join(turtlebot3_gazebo_dir, 'worlds', 'turtlebot3_house.world')
 
     turtlebot_nav2_prefix = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'launch', 
         'tb3_simulation_launch.py'
     )
@@ -40,37 +40,37 @@ def generate_launch_description():
     urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
 
     urdf_file_path = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'urdf',
         urdf_file_name
     )
     sdf_file_path = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'models',
         model_folder,
         'model.sdf'
     )
 
     nav2_yaml_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'config',
         'nav2_multirobot_params_all_copy.yaml'
     )
 
     rviz_yaml_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'rviz',
         'namespaced_rviz_config.rviz'
     )
 
     map_merge_rviz_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'rviz', 
         'merge_map.rviz'
     )
 
     map_merge_params_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'config', 
         'map_merge_params.yaml'
     )
@@ -78,13 +78,13 @@ def generate_launch_description():
     map_save_dir = os.path.join(
         os.path.expanduser('~'),
         '.cache',
-        'disaster_response_swarm',
+        'multi_robot_mission_stack',
         'tmp',
     )
     os.makedirs(map_save_dir, exist_ok=True)
     
     map_yaml_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'maps',
         'map.yaml',
     )
@@ -93,7 +93,7 @@ def generate_launch_description():
     remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
 
     slam_yaml_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'config',
         'slam_online_async.yaml'
     )
@@ -164,7 +164,7 @@ def generate_launch_description():
         # Robot spawn command with model path
         spawn_entity_cmd = ExecuteProcess(
             cmd=[
-                'ros2', 'run', 'disaster_response_swarm', 'spawn_robot_server',
+                'ros2', 'run', 'multi_robot_mission_stack', 'spawn_robot_server',
                 '-urdf', new_sdf_file,
                 '-n', robot,
                 '-ns', robot_namespace,
@@ -223,7 +223,7 @@ def generate_launch_description():
         # )
 
         robot_nav = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(disaster_pkg_dir,
+            PythonLaunchDescriptionSource(os.path.join(mission_stack_pkg_dir,
                                                         'launch', 
                                                         'localization_navigation_launch.py')),
             launch_arguments={
@@ -273,7 +273,7 @@ def generate_launch_description():
 
         # Robot spawn command with model path
         initial_pose_publisher = Node(
-            package='disaster_response_swarm', 
+            package='multi_robot_mission_stack', 
             executable='initial_pose_publisher',  # The name of your executable
             name='initial_pose_publisher',        # Name of the node
             namespace=robot_namespace,
@@ -286,7 +286,7 @@ def generate_launch_description():
         )
 
         graph_construction_node = Node(
-            package='disaster_response_swarm',
+            package='multi_robot_mission_stack',
             executable='graph_construction_node',
             name='unified_path_only_node',
             namespace=robot_namespace,
@@ -384,7 +384,7 @@ def generate_launch_description():
 
     # Robot spawn command with model path
     merge_map_cmd = Node(
-            package='disaster_response_swarm',  # Replace with your package name
+            package='multi_robot_mission_stack',  # Replace with your package name
             executable='merge_map_node',  # The name of your executable
             name='merge_map_node',        # Name of the node
             output='screen',              # Output to screen
@@ -394,5 +394,14 @@ def generate_launch_description():
     
     simulation_ld.append(merge_map_cmd)
     simulation_ld.append(map_merge_rviz)
+
+    mission_bridge_node = Node(
+        package='multi_robot_mission_stack',
+        executable='mission_bridge_node',
+        name='mission_bridge_node',
+        output='screen',
+    )
+
+    simulation_ld.append(mission_bridge_node)
 
     return  LaunchDescription(simulation_ld)

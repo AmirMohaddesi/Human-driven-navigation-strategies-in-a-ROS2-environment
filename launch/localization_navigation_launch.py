@@ -32,7 +32,7 @@ from nav2_common.launch import RewrittenYaml
 def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('nav2_bringup')
-    disaster_pkg_dir = get_package_share_directory('disaster_response_swarm')
+    mission_stack_pkg_dir = get_package_share_directory('multi_robot_mission_stack')
 
     namespace = LaunchConfiguration('namespace')
     map_yaml_file = LaunchConfiguration('map')
@@ -131,7 +131,7 @@ def generate_launch_description():
 
     declare_params_file_cmd = DeclareLaunchArgument(
         'params_file',
-        default_value=os.path.join(disaster_pkg_dir, 'config', 'nav2_multirobot_params_all_copy.yaml'),
+        default_value=os.path.join(mission_stack_pkg_dir, 'config', 'nav2_multirobot_params_all_copy.yaml'),
         description='Full path to the ROS2 parameters file to use for all launched nodes')
 
     declare_autostart_cmd = DeclareLaunchArgument(

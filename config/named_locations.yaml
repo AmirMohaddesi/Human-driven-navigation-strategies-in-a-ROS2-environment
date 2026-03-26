@@ -1,0 +1,10 @@
+locations:
+  base:
+    x: 0.0
+    y: 0.0
+    yaw: 0.0
+  test_goal:
+    x: 0.5
+    y: 0.0
+    yaw: 0.0
+

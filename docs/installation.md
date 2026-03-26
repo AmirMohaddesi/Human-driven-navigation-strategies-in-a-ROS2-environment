@@ -1,6 +1,6 @@
 # Installation
 
-This guide will walk you through setting up the **disaster_response_swarm** package.
+This guide will walk you through setting up the **multi_robot_mission_stack** package.
 
 ## Requirements
 - Ubuntu 22.04

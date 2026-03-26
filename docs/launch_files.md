@@ -4,7 +4,7 @@
 Starts the complete simulation with multiple robots, SLAM, Nav2, and map merging.
 
 ```bash
-ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py
+ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 ```
 
 ## navigation_launch.py

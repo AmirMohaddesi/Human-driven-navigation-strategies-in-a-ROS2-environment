@@ -8,7 +8,7 @@ import os
 
 def generate_launch_description():
     # Define package directories
-    disaster_pkg_dir = get_package_share_directory('disaster_response_swarm')
+    mission_stack_pkg_dir = get_package_share_directory('multi_robot_mission_stack')
     turtlebot3_gazebo_pkg_dir = get_package_share_directory('turtlebot3_gazebo')
     gazebo_ros_pkg_dir = get_package_share_directory('gazebo_ros')
 
@@ -44,7 +44,7 @@ def generate_launch_description():
     # Robot spawn command
     spawn_robot_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(disaster_pkg_dir, 'launch', 'spawn_turtlebot3.launch.py')
+            os.path.join(mission_stack_pkg_dir, 'launch', 'spawn_turtlebot3.launch.py')
         ),
         launch_arguments={
             'namespace': namespace,

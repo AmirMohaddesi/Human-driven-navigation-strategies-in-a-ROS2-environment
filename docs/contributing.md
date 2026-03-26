@@ -1,6 +1,6 @@
 # Contributing
 
-We welcome contributions to the **disaster_response_swarm** package!
+We welcome contributions to the **multi_robot_mission_stack** package!
 
 1. Fork the repository
 2. Create a new branch for your feature/fix

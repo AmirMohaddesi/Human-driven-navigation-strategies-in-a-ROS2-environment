@@ -2,7 +2,13 @@ import types
 
 import pytest
 
-from disaster_response_swarm.navigation_utils import (
+import os
+import sys
+
+# Ensure the repo root is on the import path when running tests without install.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from multi_robot_mission_stack.navigation_utils import (
     bresenham_line,
     is_free_with_margin,
     is_path_clear,

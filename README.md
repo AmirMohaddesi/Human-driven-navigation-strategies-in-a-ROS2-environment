@@ -1,6 +1,6 @@
 # ROS 2 Multi-Agent Disaster Response Platform
 
-**Main entrypoint (after build):** `ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py`  
+**Main entrypoint (after build):** `ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py`
 Set `export TURTLEBOT3_MODEL=waffle` first.
 
 ROS 2 **Humble** simulation stack: **two** TurtleBot3-class robots in Gazebo (default world: **`turtlebot3_house`** from `turtlebot3_gazebo`, matching upstream Nav2 sim bringup), each with **SLAM Toolbox** and **Navigation2**, plus a **central** `merge_map_node` that fuses per-robot SLAM maps into `/merged_map` for shared situational awareness in RViz. An optional custom world file lives at `worlds/disaster_world.world` if you wire it into your launch.
@@ -68,7 +68,7 @@ Assuming the workspace is already built (see Quickstart below):
 source /opt/ros/humble/setup.bash
 cd ~/ros2_ws && source install/setup.bash
 export TURTLEBOT3_MODEL=waffle
-ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py
+ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 ```
 
 **What you should see:** Gazebo with **two** robots; RViz windows including the map-merge view; topic **`/merged_map`** updating from `merge_map_node`. Per-robot Nav2 + SLAM traffic under `/robot1_ns/...` and `/robot2_ns/...`.
@@ -98,14 +98,14 @@ source install/setup.bash
 ### 3) Run
 ```bash
 export TURTLEBOT3_MODEL=waffle
-ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py
+ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 ```
 
 ## Optional: `graph_construction_node`
 Not started by `fully_integrated_swarm` by default. To try it for one robot after the stack is up:
 
 ```bash
-ros2 run disaster_response_swarm graph_construction_node --ros-args -p robot_namespace:=robot1_ns
+ros2 run multi_robot_mission_stack graph_construction_node --ros-args -p robot_namespace:=robot1_ns
 ```
 
 Publishes markers on `/<robot_namespace>/survey_markers` when the planner and topics are available.
@@ -114,7 +114,7 @@ Publishes markers on `/<robot_namespace>/survey_markers` when the planner and to
 `yolo_detection_node` is **optional**; YOLOv3 **weights/config are not** in the repo. Provide paths:
 
 ```bash
-ros2 run disaster_response_swarm yolo_detection_node \
+ros2 run multi_robot_mission_stack yolo_detection_node \
   --ros-args \
   -p weights_path:=/path/to/yolov3.weights \
   -p cfg_path:=/path/to/yolov3.cfg \

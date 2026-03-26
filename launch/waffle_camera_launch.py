@@ -8,10 +8,10 @@ import os
 def generate_launch_description():
     gazebo_ros_pkg_dir = get_package_share_directory('gazebo_ros')
     turtlebot3_gazebo_pkg_dir = get_package_share_directory('turtlebot3_gazebo')
-    disaster_pkg_dir = get_package_share_directory('disaster_response_swarm')
+    mission_stack_pkg_dir = get_package_share_directory('multi_robot_mission_stack')
     
     world_file = os.path.join(turtlebot3_gazebo_pkg_dir, 'worlds', 'turtlebot3_house.world')
-    sdf_file = os.path.join(disaster_pkg_dir, 'models', 'turtlebot3_waffle_pi', 'model.sdf')
+    sdf_file = os.path.join(mission_stack_pkg_dir, 'models', 'turtlebot3_waffle_pi', 'model.sdf')
 
     if not os.path.isfile(sdf_file):
         raise FileNotFoundError(f"SDF file does not exist: {sdf_file}")
@@ -45,7 +45,7 @@ def generate_launch_description():
     )
 
     # Node for RViz2
-    rviz_config_path = os.path.join(disaster_pkg_dir, 'rviz', 'minimal_rviz_config.rviz')
+    rviz_config_path = os.path.join(mission_stack_pkg_dir, 'rviz', 'minimal_rviz_config.rviz')
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -87,7 +87,7 @@ def generate_launch_description():
             'slam': 'false',           # Passed as strings
             'map': '',
             'use_sim_time': 'true',    # Passed as strings
-            'params_file': os.path.join(disaster_pkg_dir, 'params', 'navigation2_params.yaml'),
+            'params_file': os.path.join(mission_stack_pkg_dir, 'params', 'navigation2_params.yaml'),
             'autostart': 'true'        # Passed as strings
         }.items()
     )

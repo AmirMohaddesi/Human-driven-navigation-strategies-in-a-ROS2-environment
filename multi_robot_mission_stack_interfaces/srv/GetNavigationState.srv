@@ -1,0 +1,7 @@
+string robot_id
+string goal_id
+---
+string status
+string message
+string nav_status
+

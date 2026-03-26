@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>disaster_response_swarm</name>
+  <name>multi_robot_mission_stack</name>
   <version>0.0.1</version>
   <description>Disaster response swarm coordination using ROS2</description>
   <maintainer email="smohadde@uci.edu">Seyed A. Mohaddesi</maintainer>
@@ -34,6 +34,8 @@
   <exec_depend>pcl_ros</exec_depend>
   <exec_depend>image_transport</exec_depend>
   <exec_depend>camera_info_manager</exec_depend>
+  <exec_depend>multi_robot_mission_stack_interfaces</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>

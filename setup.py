@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import os
 from glob import glob
 
-package_name = 'disaster_response_swarm'
+package_name = 'multi_robot_mission_stack'
 
 setup(
     name=package_name,
@@ -27,6 +27,7 @@ setup(
         'scipy',
         # Headless build keeps the dependency installable on CI/servers.
         'opencv-python-headless',
+        'pyyaml',
     ],
     zip_safe=True,
     maintainer='Seyed Amirhosein Mohaddesi',
@@ -36,12 +37,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'spawn_robot_server = disaster_response_swarm.spawn_robot_server:main',
-            'merge_map_node = disaster_response_swarm.merge_map_node:main',
-            'graph_construction_node = disaster_response_swarm.graph_construction_node:main',
-            'initial_pose_publisher = disaster_response_swarm.initial_pose_publisher:main',
-            'yolo_detection_node = disaster_response_swarm.vision.yolo_detection_node:main',
-            'image_processor = disaster_response_swarm.vision.image_processor:main',
+            'spawn_robot_server = multi_robot_mission_stack.spawn_robot_server:main',
+            'merge_map_node = multi_robot_mission_stack.merge_map_node:main',
+            'graph_construction_node = multi_robot_mission_stack.graph_construction_node:main',
+            'initial_pose_publisher = multi_robot_mission_stack.initial_pose_publisher:main',
+            'yolo_detection_node = multi_robot_mission_stack.vision.yolo_detection_node:main',
+            'image_processor = multi_robot_mission_stack.vision.image_processor:main',
+            'mission_bridge_node = multi_robot_mission_stack.bridge.mission_bridge_node:main',
         ],
     },
 )   

@@ -24,7 +24,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
     gazebo_ros_pkg_dir = get_package_share_directory('gazebo_ros')
-    disaster_pkg_dir = get_package_share_directory('disaster_response_swarm')
+    mission_stack_pkg_dir = get_package_share_directory('multi_robot_mission_stack')
     turtlebot3_gazebo_dir = get_package_share_directory('turtlebot3_gazebo')
     turtlebot3_description_dir = get_package_share_directory('turtlebot3_description')
     world_file = os.path.join(turtlebot3_gazebo_dir, 'worlds', 'turtlebot3_house.world')
@@ -37,20 +37,20 @@ def generate_launch_description():
         urdf_file_name
     )
     sdf_file_path = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'models',
         model_folder,
         'model.sdf'
     )
 
     nav2_yaml_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'config',
         'nav2_multirobot_params_all.yaml'
     )
 
     slam_yaml_file = os.path.join(
-        disaster_pkg_dir,
+        mission_stack_pkg_dir,
         'config',
         'slam_online_async.yaml'
     )
@@ -79,7 +79,7 @@ def generate_launch_description():
     # Robot spawn command with model path
     spawn_entity_cmd1 = ExecuteProcess(
         cmd=[
-            'ros2', 'run', 'disaster_response_swarm', 'spawn_robot_server',
+            'ros2', 'run', 'multi_robot_mission_stack', 'spawn_robot_server',
             '-urdf', sdf_file_path,
             '-n', 'robot1',
             '-ns', 'robot1_ns',

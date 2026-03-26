@@ -1,6 +1,6 @@
 # ROS2 Multi-Agent Disaster Response Platform
 
-Welcome to the official documentation for the **disaster_response_swarm** package — 
+Welcome to the official documentation for the **multi_robot_mission_stack** package —
 a ROS 2 (Humble) multi‑robot platform for disaster response simulation using TurtleBot3.
 
 This site provides installation guides, architecture overviews, and advanced usage tips 
@@ -24,7 +24,7 @@ cd ~/ros2_ws
 colcon build --symlink-install
 source install/setup.bash
 
-ros2 launch disaster_response_swarm fully_integrated_swarm.launch.py
+ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 ```
 
 ## 📚 Documentation Sections
