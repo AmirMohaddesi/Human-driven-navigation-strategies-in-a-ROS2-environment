@@ -55,27 +55,48 @@ class Nav2Client:
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = pose_stamped
 
-        send_future = self._client.send_goal_async(goal_msg)
-        rclpy.spin_until_future_complete(self._node, send_future)
-
-        goal_handle = send_future.result()
-        if goal_handle is None or not goal_handle.accepted:
-            return {
-                "status": "failure",
-                "message": "NavigateToPose goal rejected",
-                "goal_id": ""
-            }
-
-        # Store for later state/cancel operations.
-        self._goal_handle = goal_handle
-        self._result_future = goal_handle.get_result_async()
-
         goal_id = str(uuid.uuid4())
+        send_future = self._client.send_goal_async(goal_msg)
+
+        def _on_goal_response(future) -> None:
+            try:
+                goal_handle = future.result()
+            except Exception as exc:  # pragma: no cover - defensive
+                self._node.get_logger().warn(f"NavigateToPose goal response failed: {exc}")
+                return
+
+            if goal_handle is None or not goal_handle.accepted:
+                self._node.get_logger().warn("NavigateToPose goal rejected by action server")
+                return
+
+            # Store for later state/cancel operations.
+            self._goal_handle = goal_handle
+            self._result_future = goal_handle.get_result_async()
+
+        # Avoid blocking inside service callbacks; process response asynchronously.
+        send_future.add_done_callback(_on_goal_response)
+
+        # If the response is already available, reflect immediate rejection/acceptance.
+        if send_future.done():
+            goal_handle = send_future.result()
+            if goal_handle is None or not goal_handle.accepted:
+                return {
+                    "status": "failure",
+                    "message": "NavigateToPose goal rejected",
+                    "goal_id": "",
+                }
+            self._goal_handle = goal_handle
+            self._result_future = goal_handle.get_result_async()
+            return {
+                "status": "in_progress",
+                "message": "NavigateToPose goal accepted",
+                "goal_id": goal_id,
+            }
 
         return {
             "status": "in_progress",
-            "message": "NavigateToPose goal accepted",
-            "goal_id": goal_id
+            "message": "NavigateToPose goal submitted",
+            "goal_id": goal_id,
         }
 
     def has_active_goal(self) -> bool:
