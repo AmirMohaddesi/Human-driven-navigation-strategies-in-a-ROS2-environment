@@ -5,8 +5,8 @@ import pytest
 import os
 import sys
 
-# Ensure the repo root is on the import path when running tests without install.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Ensure src/ is on the import path when running tests without install.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 from multi_robot_mission_stack.navigation_utils import (
     bresenham_line,
