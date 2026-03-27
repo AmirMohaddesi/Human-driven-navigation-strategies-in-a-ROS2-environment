@@ -42,6 +42,7 @@ setup(
         # Headless build keeps the dependency installable on CI/servers.
         'opencv-python-headless',
         'pyyaml',
+        'langgraph>=0.2.0',
     ],
     zip_safe=True,
     maintainer='Seyed Amirhosein Mohaddesi',
@@ -58,6 +59,7 @@ setup(
             'yolo_detection_node = multi_robot_mission_stack.vision.yolo_detection_node:main',
             'image_processor = multi_robot_mission_stack.vision.image_processor:main',
             'mission_bridge_node = multi_robot_mission_stack.bridge.mission_bridge_node:main',
+            'mission-agent = multi_robot_mission_stack.agent.cli:main',
         ],
     },
 )   
