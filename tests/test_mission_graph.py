@@ -19,6 +19,20 @@ def graph() -> MissionGraph:
     return MissionGraph(tools, policy=policy)
 
 
+def test_navigate_to_pose_succeeds(graph: MissionGraph) -> None:
+    req = {
+        "action": "navigate_to_pose",
+        "robot_id": "robot1",
+        "x": 0.5,
+        "y": -0.25,
+        "yaw": 1.57,
+    }
+    out = graph.invoke(req)
+    assert out["status"] == "accepted"
+    assert out["nav_status"] == "submitted"
+    assert out.get("goal_id")
+
+
 def test_navigate_to_named_location_succeeds(graph: MissionGraph) -> None:
     req = {
         "action": "navigate_to_named_location",
@@ -29,6 +43,26 @@ def test_navigate_to_named_location_succeeds(graph: MissionGraph) -> None:
     assert out["status"] == "accepted"
     assert out["nav_status"] == "submitted"
     assert out.get("goal_id")
+
+
+def test_cancel_navigation_succeeds_after_submitted_goal(graph: MissionGraph) -> None:
+    nav = graph.invoke(
+        {
+            "action": "navigate_to_named_location",
+            "robot_id": "robot1",
+            "location_name": "base",
+        }
+    )
+    gid = nav["goal_id"]
+    out = graph.invoke(
+        {
+            "action": "cancel_navigation",
+            "robot_id": "robot1",
+            "goal_id": gid,
+        }
+    )
+    assert out["status"] == "success"
+    assert out["nav_status"] == "canceled"
 
 
 def test_get_navigation_state_succeeds_after_submitted_goal(graph: MissionGraph) -> None:

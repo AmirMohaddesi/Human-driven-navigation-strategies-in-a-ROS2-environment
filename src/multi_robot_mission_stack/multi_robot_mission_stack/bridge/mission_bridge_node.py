@@ -1,8 +1,10 @@
 from typing import Dict, Any, Tuple
 
 import os
+import time
 
 import rclpy
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 import yaml
@@ -113,10 +115,10 @@ class MissionBridgeNode(Node):
         self, request: NavigateToPose.Request, response: NavigateToPose.Response
     ) -> NavigateToPose.Response:
         result = self.navigate_to_pose(
-            request.robot_id,
-            request.x,
-            request.y,
-            request.yaw,
+            str(request.robot_id).strip(),
+            float(request.x),
+            float(request.y),
+            float(request.yaw),
         )
 
         response.status = str(result.get("status", ""))
@@ -133,7 +135,9 @@ class MissionBridgeNode(Node):
         request: GetNavigationState.Request,
         response: GetNavigationState.Response,
     ) -> GetNavigationState.Response:
-        result = self.get_navigation_state(request.robot_id, request.goal_id)
+        result = self.get_navigation_state(
+            str(request.robot_id).strip(), str(request.goal_id).strip()
+        )
 
         response.status = str(result.get("status", ""))
         response.message = str(result.get("message", ""))
@@ -148,7 +152,9 @@ class MissionBridgeNode(Node):
         request: CancelNavigation.Request,
         response: CancelNavigation.Response,
     ) -> CancelNavigation.Response:
-        result = self.cancel_navigation(request.robot_id, request.goal_id)
+        result = self.cancel_navigation(
+            str(request.robot_id).strip(), str(request.goal_id).strip()
+        )
 
         response.status = str(result.get("status", ""))
         response.message = str(result.get("message", ""))
@@ -164,8 +170,8 @@ class MissionBridgeNode(Node):
         response: NavigateToNamedLocation.Response,
     ) -> NavigateToNamedLocation.Response:
         result = self.navigate_to_named_location(
-            request.robot_id,
-            request.location_name,
+            str(request.robot_id).strip(),
+            str(request.location_name).strip(),
         )
 
         response.status = str(result.get("status", ""))
@@ -202,6 +208,7 @@ class MissionBridgeNode(Node):
               }
             }
         """
+        robot_id = str(robot_id).strip()
         namespace = self._robot_namespaces.get(robot_id)
         if namespace is None:
             return {
@@ -219,9 +226,13 @@ class MissionBridgeNode(Node):
 
         status = result.get("status", "failure")
         message = result.get("message", "")
-        goal_id = result.get("goal_id", "")
+        raw_gid = result.get("goal_id", "")
+        goal_id = str(raw_gid).strip() if raw_gid is not None else ""
 
-        if status == "in_progress" and goal_id:
+        # Register whenever Nav2Client returned a goal id (failure paths use "").
+        # Do not gate on status == "in_progress" alone: mismatched type/variant status
+        # values would skip registration while still returning goal_id to callers.
+        if goal_id:
             nav_status = "accepted"
             self._active_goals[(robot_id, goal_id)] = {
                 "robot_id": robot_id,
@@ -246,6 +257,8 @@ class MissionBridgeNode(Node):
         """
         Inspect the current state of a known navigation goal.
         """
+        robot_id = str(robot_id).strip()
+        goal_id = str(goal_id).strip()
         if robot_id not in self._robot_namespaces:
             return {
                 "status": "failure",
@@ -287,6 +300,8 @@ class MissionBridgeNode(Node):
         """
         Request cancellation of a goal created by this bridge.
         """
+        robot_id = str(robot_id).strip()
+        goal_id = str(goal_id).strip()
         if robot_id not in self._robot_namespaces:
             return {
                 "status": "failure",
@@ -331,6 +346,8 @@ class MissionBridgeNode(Node):
         """
         Navigate a robot to a named location defined in the config.
         """
+        robot_id = str(robot_id).strip()
+        location_name = str(location_name).strip()
         if robot_id not in self._robot_namespaces:
             return {
                 "status": "failure",
@@ -427,9 +444,32 @@ def _manual_test() -> None:
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = MissionBridgeNode()
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
     try:
-        rclpy.spin(node)
+        # Wait for Nav2 action servers outside service callbacks so discovery can progress
+        # (blocking wait_for_server inside a service handler starves a single-threaded executor).
+        deadline = time.monotonic() + 120.0
+        while time.monotonic() < deadline:
+            for robot_id in node._robot_namespaces:
+                nav_client = node._get_or_create_client(robot_id)
+                if not nav_client.action_server_ready():
+                    break
+            else:
+                node.get_logger().info(
+                    "Nav2 NavigateToPose action servers ready for all configured robots."
+                )
+                break
+            executor.spin_once(timeout_sec=0.1)
+        else:
+            node.get_logger().warn(
+                "Timed out waiting for Nav2 NavigateToPose action servers; "
+                "navigate services may return 'action server not available' until Nav2 is up."
+            )
+
+        executor.spin()
     finally:
+        executor.remove_node(node)
         node.destroy_node()
         rclpy.shutdown()
 

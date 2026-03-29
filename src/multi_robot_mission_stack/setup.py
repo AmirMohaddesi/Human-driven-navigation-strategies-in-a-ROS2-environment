@@ -3,7 +3,6 @@ import os
 from glob import glob
 
 package_name = 'multi_robot_mission_stack'
-package_parent = '..'
 
 model_data_files = [
     (
@@ -17,12 +16,8 @@ model_data_files = [
 setup(
     name=package_name,
     version='0.0.1',
-    packages=find_packages(
-        where=package_parent,
-        include=[package_name, f'{package_name}.*'],
-        exclude=['test'],
-    ),
-    package_dir={'': package_parent},
+    packages=find_packages(exclude=['test']),
+    package_dir={'': '.'},
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),

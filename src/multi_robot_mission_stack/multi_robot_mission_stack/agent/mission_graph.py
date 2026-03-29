@@ -58,8 +58,16 @@ class MissionGraph:
             self._execute_navigate_to_named_location,
         )
         builder.add_node(
+            "execute_navigate_to_pose",
+            self._execute_navigate_to_pose,
+        )
+        builder.add_node(
             "execute_get_navigation_state",
             self._execute_get_navigation_state,
+        )
+        builder.add_node(
+            "execute_cancel_navigation",
+            self._execute_cancel_navigation,
         )
         builder.add_node("unsupported_action", self._unsupported_action)
 
@@ -78,7 +86,9 @@ class MissionGraph:
             {
                 "finalize_policy_denial": "finalize_policy_denial",
                 "execute_navigate_to_named_location": "execute_navigate_to_named_location",
+                "execute_navigate_to_pose": "execute_navigate_to_pose",
                 "execute_get_navigation_state": "execute_get_navigation_state",
+                "execute_cancel_navigation": "execute_cancel_navigation",
                 "unsupported_action": "unsupported_action",
             },
         )
@@ -86,7 +96,9 @@ class MissionGraph:
             "finalize_request_error",
             "finalize_policy_denial",
             "execute_navigate_to_named_location",
+            "execute_navigate_to_pose",
             "execute_get_navigation_state",
+            "execute_cancel_navigation",
             "unsupported_action",
         ):
             builder.add_edge(node, END)
@@ -137,7 +149,9 @@ class MissionGraph:
     ) -> Literal[
         "finalize_policy_denial",
         "execute_navigate_to_named_location",
+        "execute_navigate_to_pose",
         "execute_get_navigation_state",
+        "execute_cancel_navigation",
         "unsupported_action",
     ]:
         if not state.get("policy_allowed", False):
@@ -145,8 +159,12 @@ class MissionGraph:
         action = state.get("action", "")
         if action == "navigate_to_named_location":
             return "execute_navigate_to_named_location"
+        if action == "navigate_to_pose":
+            return "execute_navigate_to_pose"
         if action == "get_navigation_state":
             return "execute_get_navigation_state"
+        if action == "cancel_navigation":
+            return "execute_cancel_navigation"
         return "unsupported_action"
 
     def _finalize_request_error(self, state: MissionGraphState) -> Dict[str, Any]:
@@ -177,6 +195,30 @@ class MissionGraph:
         )
         return {"result": result}
 
+    def _execute_navigate_to_pose(
+        self, state: MissionGraphState
+    ) -> Dict[str, Any]:
+        req = state.get("request") or {}
+        robot_id = req.get("robot_id")
+        x = req.get("x")
+        y = req.get("y")
+        yaw = req.get("yaw")
+        if robot_id is None:
+            return {
+                "result": _failure("missing required field 'robot_id'"),
+            }
+        if x is None or y is None or yaw is None:
+            return {
+                "result": _failure("missing required pose fields x, y, or yaw"),
+            }
+        result = self._tools.navigate_to_pose(
+            str(robot_id),
+            float(x),
+            float(y),
+            float(yaw),
+        )
+        return {"result": result}
+
     def _execute_get_navigation_state(
         self, state: MissionGraphState
     ) -> Dict[str, Any]:
@@ -192,6 +234,23 @@ class MissionGraph:
                 "result": _failure("missing required field 'goal_id'"),
             }
         result = self._tools.get_navigation_state(str(robot_id), str(goal_id))
+        return {"result": result}
+
+    def _execute_cancel_navigation(
+        self, state: MissionGraphState
+    ) -> Dict[str, Any]:
+        req = state.get("request") or {}
+        robot_id = req.get("robot_id")
+        goal_id = req.get("goal_id")
+        if robot_id is None:
+            return {
+                "result": _failure("missing required field 'robot_id'"),
+            }
+        if goal_id is None:
+            return {
+                "result": _failure("missing required field 'goal_id'"),
+            }
+        result = self._tools.cancel_navigation(str(robot_id), str(goal_id))
         return {"result": result}
 
     def _unsupported_action(self, state: MissionGraphState) -> Dict[str, Any]:

@@ -16,6 +16,32 @@ def default_policy() -> MissionPolicy:
     return MissionPolicy(build_default_policy_config())
 
 
+def test_default_policy_allows_valid_navigate_to_pose(default_policy: MissionPolicy) -> None:
+    req = {
+        "action": "navigate_to_pose",
+        "robot_id": "robot1",
+        "x": 1.0,
+        "y": 0.0,
+        "yaw": 0.0,
+    }
+    verdict = default_policy.evaluate(req)
+    assert verdict["allowed"] is True
+    assert verdict["message"] == "request allowed"
+
+
+def test_default_policy_denies_non_numeric_pose_field(default_policy: MissionPolicy) -> None:
+    req = {
+        "action": "navigate_to_pose",
+        "robot_id": "robot1",
+        "x": "bad",
+        "y": 0.0,
+        "yaw": 0.0,
+    }
+    verdict = default_policy.evaluate(req)
+    assert verdict["allowed"] is False
+    assert "x" in verdict["message"].lower()
+
+
 def test_default_policy_allows_valid_navigate_request(default_policy: MissionPolicy) -> None:
     req = {
         "action": "navigate_to_named_location",
@@ -31,6 +57,19 @@ def test_default_policy_allows_valid_state_query(default_policy: MissionPolicy) 
     req = {
         "action": "get_navigation_state",
         "robot_id": "robot2",
+        "goal_id": "mock-goal-001",
+    }
+    verdict = default_policy.evaluate(req)
+    assert verdict["allowed"] is True
+    assert verdict["message"] == "request allowed"
+
+
+def test_default_policy_allows_valid_cancel_navigation(
+    default_policy: MissionPolicy,
+) -> None:
+    req = {
+        "action": "cancel_navigation",
+        "robot_id": "robot1",
         "goal_id": "mock-goal-001",
     }
     verdict = default_policy.evaluate(req)
@@ -78,6 +117,18 @@ def test_denies_missing_goal_id_for_get_navigation_state(
 ) -> None:
     req = {
         "action": "get_navigation_state",
+        "robot_id": "robot1",
+    }
+    verdict = default_policy.evaluate(req)
+    assert verdict["allowed"] is False
+    assert "goal_id" in verdict["message"].lower()
+
+
+def test_denies_missing_goal_id_for_cancel_navigation(
+    default_policy: MissionPolicy,
+) -> None:
+    req = {
+        "action": "cancel_navigation",
         "robot_id": "robot1",
     }
     verdict = default_policy.evaluate(req)

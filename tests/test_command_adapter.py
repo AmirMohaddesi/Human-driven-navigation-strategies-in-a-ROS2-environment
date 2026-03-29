@@ -12,6 +12,25 @@ def adapter() -> CommandAdapter:
     return CommandAdapter()
 
 
+def test_valid_navigate_pose_command_adapts_correctly(adapter: CommandAdapter) -> None:
+    cmd = {
+        "type": "navigate",
+        "target": "pose",
+        "robot_id": "robot1",
+        "x": 1.0,
+        "y": 2.0,
+        "yaw": 0.0,
+    }
+    out = adapter.adapt(cmd)
+    assert out == {
+        "action": "navigate_to_pose",
+        "robot_id": "robot1",
+        "x": 1.0,
+        "y": 2.0,
+        "yaw": 0.0,
+    }
+
+
 def test_valid_navigate_command_adapts_correctly(adapter: CommandAdapter) -> None:
     cmd = {
         "type": "navigate",
@@ -42,6 +61,21 @@ def test_valid_query_command_adapts_correctly(adapter: CommandAdapter) -> None:
     }
 
 
+def test_valid_cancel_command_adapts_correctly(adapter: CommandAdapter) -> None:
+    cmd = {
+        "type": "cancel",
+        "target": "navigation",
+        "robot_id": "robot1",
+        "goal_id": "mock-goal-001",
+    }
+    out = adapter.adapt(cmd)
+    assert out == {
+        "action": "cancel_navigation",
+        "robot_id": "robot1",
+        "goal_id": "mock-goal-001",
+    }
+
+
 def test_non_dict_command_returns_failure_dict(adapter: CommandAdapter) -> None:
     out = adapter.adapt("not-a-dict")  # type: ignore[arg-type]
     assert out["status"] == "failed"
@@ -59,7 +93,7 @@ def test_unsupported_navigate_target_returns_failure_dict(adapter: CommandAdapte
     out = adapter.adapt(cmd)
     assert out["status"] == "failed"
     assert out["nav_status"] == "unknown"
-    assert "named_location" in out["message"]
+    assert "named_location" in out["message"] or "pose" in out["message"]
 
 
 def test_missing_robot_id_returns_failure_dict(adapter: CommandAdapter) -> None:

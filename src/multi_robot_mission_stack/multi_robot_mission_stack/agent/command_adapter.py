@@ -30,8 +30,10 @@ class CommandAdapter:
         if cmd_type == "navigate":
             if target == "named_location":
                 return self._adapt_navigate_named_location(command)
+            if target == "pose":
+                return self._adapt_navigate_pose(command)
             return self._fail(
-                f"unsupported navigate target {target!r}; expected 'named_location'"
+                f"unsupported navigate target {target!r}; expected 'named_location' or 'pose'"
             )
 
         if cmd_type == "query":
@@ -39,6 +41,13 @@ class CommandAdapter:
                 return self._adapt_query_navigation_state(command)
             return self._fail(
                 f"unsupported query target {target!r}; expected 'navigation_state'"
+            )
+
+        if cmd_type == "cancel":
+            if target == "navigation":
+                return self._adapt_cancel_navigation(command)
+            return self._fail(
+                f"unsupported cancel target {target!r}; expected 'navigation'"
             )
 
         return self._fail(f"unknown command type {cmd_type!r}")
@@ -82,6 +91,29 @@ class CommandAdapter:
             "location_name": str(command["location_name"]).strip(),
         }
 
+    @staticmethod
+    def _is_numeric(value: Any) -> bool:
+        if isinstance(value, bool):
+            return False
+        return isinstance(value, (int, float))
+
+    def _adapt_navigate_pose(self, command: Dict[str, Any]) -> Dict[str, Any]:
+        rid_err = self._require_non_empty_string(command.get("robot_id"), "robot_id")
+        if rid_err is not None:
+            return self._fail(rid_err)
+        for field in ("x", "y", "yaw"):
+            if command.get(field) is None:
+                return self._fail(f"missing required field {field!r}")
+            if not self._is_numeric(command.get(field)):
+                return self._fail(f"{field} must be numeric")
+        return {
+            "action": "navigate_to_pose",
+            "robot_id": str(command["robot_id"]).strip(),
+            "x": float(command["x"]),
+            "y": float(command["y"]),
+            "yaw": float(command["yaw"]),
+        }
+
     def _adapt_query_navigation_state(self, command: Dict[str, Any]) -> Dict[str, Any]:
         rid_err = self._require_non_empty_string(command.get("robot_id"), "robot_id")
         if rid_err is not None:
@@ -91,6 +123,19 @@ class CommandAdapter:
             return self._fail(gid_err)
         return {
             "action": "get_navigation_state",
+            "robot_id": str(command["robot_id"]).strip(),
+            "goal_id": str(command["goal_id"]).strip(),
+        }
+
+    def _adapt_cancel_navigation(self, command: Dict[str, Any]) -> Dict[str, Any]:
+        rid_err = self._require_non_empty_string(command.get("robot_id"), "robot_id")
+        if rid_err is not None:
+            return self._fail(rid_err)
+        gid_err = self._require_non_empty_string(command.get("goal_id"), "goal_id")
+        if gid_err is not None:
+            return self._fail(gid_err)
+        return {
+            "action": "cancel_navigation",
             "robot_id": str(command["robot_id"]).strip(),
             "goal_id": str(command["goal_id"]).strip(),
         }

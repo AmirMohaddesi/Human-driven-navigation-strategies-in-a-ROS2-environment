@@ -33,9 +33,19 @@ def build_parser() -> argparse.ArgumentParser:
     nav.add_argument("--robot-id", required=True, help="Robot identifier.")
     nav.add_argument("--location-name", required=True, help="Named location.")
 
+    np = sub.add_parser("navigate-pose", help="Navigate robot to map pose (x, y, yaw).")
+    np.add_argument("--robot-id", required=True, help="Robot identifier.")
+    np.add_argument("--x", type=float, required=True, help="Goal x (map frame).")
+    np.add_argument("--y", type=float, required=True, help="Goal y (map frame).")
+    np.add_argument("--yaw", type=float, required=True, help="Goal yaw (radians).")
+
     q = sub.add_parser("query-state", help="Query navigation state for a goal.")
     q.add_argument("--robot-id", required=True, help="Robot identifier.")
     q.add_argument("--goal-id", required=True, help="Goal identifier.")
+
+    c = sub.add_parser("cancel", help="Cancel navigation for a goal.")
+    c.add_argument("--robot-id", required=True, help="Robot identifier.")
+    c.add_argument("--goal-id", required=True, help="Goal identifier.")
 
     return parser
 
@@ -52,9 +62,36 @@ def _exit_code_from_result(result: Dict[str, Any]) -> int:
     status = result.get("status")
     if status == "failed":
         return 1
-    if status in ("accepted", "success"):
+    # Bridge + MissionClient return in_progress when Nav2 accepted the goal async.
+    if status in ("accepted", "success", "in_progress"):
         return 0
     return 1
+
+
+def handle_navigate_pose(args: argparse.Namespace) -> int:
+    facade: MissionAgentFacade | None = None
+    try:
+        facade = create_facade_from_args(args)
+        cmd = {
+            "type": "navigate",
+            "target": "pose",
+            "robot_id": args.robot_id,
+            "x": args.x,
+            "y": args.y,
+            "yaw": args.yaw,
+        }
+        out = facade.handle_command(cmd)
+        print(json.dumps(out, separators=(",", ":")))
+        return _exit_code_from_result(out)
+    except Exception as exc:
+        print(f"mission-agent: error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        if facade is not None:
+            try:
+                facade.close()
+            except Exception:
+                pass
 
 
 def handle_navigate(args: argparse.Namespace) -> int:
@@ -105,13 +142,41 @@ def handle_query_state(args: argparse.Namespace) -> int:
                 pass
 
 
+def handle_cancel(args: argparse.Namespace) -> int:
+    facade: MissionAgentFacade | None = None
+    try:
+        facade = create_facade_from_args(args)
+        cmd = {
+            "type": "cancel",
+            "target": "navigation",
+            "robot_id": args.robot_id,
+            "goal_id": args.goal_id,
+        }
+        out = facade.handle_command(cmd)
+        print(json.dumps(out, separators=(",", ":")))
+        return _exit_code_from_result(out)
+    except Exception as exc:
+        print(f"mission-agent: error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        if facade is not None:
+            try:
+                facade.close()
+            except Exception:
+                pass
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
     if args.command == "navigate":
         return handle_navigate(args)
+    if args.command == "navigate-pose":
+        return handle_navigate_pose(args)
     if args.command == "query-state":
         return handle_query_state(args)
+    if args.command == "cancel":
+        return handle_cancel(args)
     print("mission-agent: internal error: unknown subcommand", file=sys.stderr)
     return 1
 

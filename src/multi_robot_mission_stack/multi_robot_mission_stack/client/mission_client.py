@@ -40,7 +40,9 @@ class MissionClient:
         self._node = rclpy.create_node(f"mission_client_{uuid.uuid4().hex[:8]}")
 
     def _service_path(self, suffix: str) -> str:
-        return f"/{self._bridge_node_name}/{suffix}"
+        # MissionBridgeNode advertises these at the graph root (verify: ros2 node info
+        # /mission_bridge_node → /navigate_to_pose, not /mission_bridge_node/navigate_to_pose).
+        return f"/{suffix}"
 
     @staticmethod
     def _fail_goal(message: str) -> Dict[str, Any]:
@@ -65,7 +67,7 @@ class MissionClient:
         srv_type: Type[Any],
         request: ReqT,
         *,
-        timeout_sec: float = 3.0,
+        timeout_sec: float = 10.0,
         include_goal_id: bool,
     ) -> Dict[str, Any]:
         if self._closed or self._node is None:

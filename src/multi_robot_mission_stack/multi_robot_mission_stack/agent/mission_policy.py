@@ -36,6 +36,12 @@ class MissionPolicy:
                 return self._deny(loc_err)
             return self._allow()
 
+        if action == "navigate_to_pose":
+            pose_err = self._check_pose_fields(request)
+            if pose_err is not None:
+                return self._deny(pose_err)
+            return self._allow()
+
         if action == "get_navigation_state":
             gid = request.get("goal_id")
             gid_err = self._require_non_empty_string(gid, "goal_id")
@@ -43,7 +49,28 @@ class MissionPolicy:
                 return self._deny(gid_err)
             return self._allow()
 
+        if action == "cancel_navigation":
+            gid = request.get("goal_id")
+            gid_err = self._require_non_empty_string(gid, "goal_id")
+            if gid_err is not None:
+                return self._deny(gid_err)
+            return self._allow()
+
         return self._deny(f"action {action!r} is not handled")
+
+    @staticmethod
+    def _numeric_field_ok(value: Any) -> bool:
+        if isinstance(value, bool):
+            return False
+        return isinstance(value, (int, float))
+
+    def _check_pose_fields(self, request: Dict[str, Any]) -> Optional[str]:
+        for field in ("x", "y", "yaw"):
+            if request.get(field) is None:
+                return f"missing required field {field!r}"
+            if not self._numeric_field_ok(request.get(field)):
+                return f"{field} must be numeric"
+        return None
 
     def _check_location(self, request: Dict[str, Any]) -> Optional[str]:
         loc = request.get("location_name")

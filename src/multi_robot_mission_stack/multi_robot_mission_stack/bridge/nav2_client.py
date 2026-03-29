@@ -6,6 +6,7 @@ from rclpy.node import Node
 
 from geometry_msgs.msg import PoseStamped, Quaternion
 from nav2_msgs.action import NavigateToPose
+from unique_identifier_msgs.msg import UUID as UUIDMsg
 
 import math
 import uuid
@@ -20,6 +21,10 @@ class Nav2Client:
         self._client = ActionClient(node, NavigateToPose, action_name)
         self._goal_handle: Optional[NavigateToPose.Goal] = None  # type: ignore[assignment]
         self._result_future = None
+
+    def action_server_ready(self) -> bool:
+        """Non-blocking check; use bridge startup prewarm + executor spin for discovery."""
+        return self._client.server_is_ready()
 
     def _yaw_to_quaternion(self, yaw: float) -> Quaternion:
         q = Quaternion()
@@ -38,11 +43,11 @@ class Nav2Client:
               "goal_id": str
             }
         """
-        if not self._client.wait_for_server(timeout_sec=5.0):
+        if not self._client.server_is_ready():
             return {
                 "status": "failure",
                 "message": "NavigateToPose action server not available",
-                "goal_id": ""
+                "goal_id": "",
             }
 
         pose_stamped = PoseStamped()
@@ -55,8 +60,10 @@ class Nav2Client:
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = pose_stamped
 
-        goal_id = str(uuid.uuid4())
-        send_future = self._client.send_goal_async(goal_msg)
+        py_uid = uuid.uuid4()
+        ros_goal_id = UUIDMsg(uuid=list(py_uid.bytes))
+        goal_id = str(py_uid)
+        send_future = self._client.send_goal_async(goal_msg, goal_uuid=ros_goal_id)
 
         def _on_goal_response(future) -> None:
             try:
@@ -107,7 +114,8 @@ class Nav2Client:
         Attempt to cancel the currently tracked goal.
 
         Returns a dict with a normalized nav_status:
-            { "nav_status": "cancelling" | "cancelled" | "not_cancellable" | "unknown" }
+            { "nav_status": "cancelling" | "not_cancellable" }
+        Cancel completion is reflected later via get_goal_state / the result future.
         """
         if not self.has_active_goal():
             return {
@@ -115,17 +123,13 @@ class Nav2Client:
                 "message": "No active goal to cancel"
             }
 
-        cancel_future = self._goal_handle.cancel_goal_async()  # type: ignore[union-attr]
-        rclpy.spin_until_future_complete(self._node, cancel_future)
-        cancel_result = cancel_future.result()
+        # Fire-and-forget: do not spin/wait here. mission_bridge_node handles this from
+        # a service callback on a SingleThreadedExecutor; spin_until_future_complete would
+        # block the executor and prevent the cancel response from being processed (deadlock
+        # until clients time out).
+        self._goal_handle.cancel_goal_async()  # type: ignore[union-attr]
 
-        if cancel_result is None:
-            return {
-                "nav_status": "unknown",
-                "message": "Cancel request returned no result"
-            }
-
-        # Nav2 will eventually report a canceled result via the result future.
+        # Nav2 will report canceled/finished via the existing result future.
         return {
             "nav_status": "cancelling",
             "message": "Cancel requested"

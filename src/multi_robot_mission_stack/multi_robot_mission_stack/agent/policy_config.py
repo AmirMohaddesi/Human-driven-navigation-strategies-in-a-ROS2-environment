@@ -21,7 +21,9 @@ def build_default_policy_config() -> MissionPolicyConfig:
         allowed_actions=frozenset(
             {
                 "navigate_to_named_location",
+                "navigate_to_pose",
                 "get_navigation_state",
+                "cancel_navigation",
             }
         ),
         allowed_robot_ids=frozenset({"robot1", "robot2"}),

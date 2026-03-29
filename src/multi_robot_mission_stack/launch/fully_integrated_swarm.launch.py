@@ -7,29 +7,44 @@
 import os
 import tempfile
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, GroupAction, ExecuteProcess
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    GroupAction,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    SetEnvironmentVariable,
+)
+from launch.conditions import LaunchConfigurationEquals
+from launch.launch_context import LaunchContext
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
 from ament_index_python.packages import get_package_share_directory
 
+from multi_robot_mission_stack.gazebo_launch_env import ensure_gazebo_classic_paths
 from nav2_common.launch import RewrittenYaml
 
 
+def _opaque_refresh_gazebo_paths(_context: LaunchContext):
+    """Re-apply paths at runtime immediately before Gazebo include (gzserver freezes env at eval)."""
+    ensure_gazebo_classic_paths()
+    return None
+
+
 def generate_launch_description():
-    
-        # Get the urdf file
+    ensure_gazebo_classic_paths()
+
+    # Get the urdf file
     TURTLEBOT3_MODEL = os.environ.get('TURTLEBOT3_MODEL', 'waffle')
     model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
     
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
-    gazebo_ros_pkg_dir = get_package_share_directory('gazebo_ros')
     mission_stack_pkg_dir = get_package_share_directory('multi_robot_mission_stack')
-    turtlebot3_gazebo_dir = get_package_share_directory('turtlebot3_gazebo')
+    mission_stack_launch_dir = os.path.join(mission_stack_pkg_dir, 'launch')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
-    world_file = os.path.join(turtlebot3_gazebo_dir, 'worlds', 'turtlebot3_house.world')
 
     turtlebot_nav2_prefix = os.path.join(
         mission_stack_pkg_dir,
@@ -103,22 +118,39 @@ def generate_launch_description():
         robot_desc = infp.read()
 
 
-    gzserver_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(gazebo_ros_pkg_dir, 'launch', 'gzserver.launch.py')),
-        launch_arguments={
-            'world' : world_file, 
-            'use_sim_time': use_sim_time
-        }.items()
+    # Same gzserver/gzclient wiring as turtlebot3_gazebo turtlebot3_house.launch.py (world only).
+    turtlebot3_house_gazebo_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(mission_stack_launch_dir, 'turtlebot3_house_gazebo.launch.py')
+        ),
     )
 
-    gzclient_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(gazebo_ros_pkg_dir, 'launch', 'gzclient.launch.py'))
+    # Gazebo Classic + OGRE GLX on Wayland often shows texture corruption via QtWayland;
+    # force X11 Qt platform (xcb) for stable gzclient rendering. Inherited by later actions only.
+    declare_gazebo_software_gl = DeclareLaunchArgument(
+        'gazebo_software_gl',
+        default_value='false',
+        description=(
+            'If true, sets LIBGL_ALWAYS_SOFTWARE=1 (slow debug fallback; use only if GPU corruption remains).'
+        ),
     )
-    
-    simulation_ld =[
-        # setup_environment,
-        gzserver_cmd,
-        gzclient_cmd
+    gazebo_qt_xcb = SetEnvironmentVariable(
+        name='QT_QPA_PLATFORM',
+        value='xcb',
+    )
+    gazebo_optional_software_gl = GroupAction(
+        actions=[
+            SetEnvironmentVariable(name='LIBGL_ALWAYS_SOFTWARE', value='1'),
+        ],
+        condition=LaunchConfigurationEquals('gazebo_software_gl', 'true'),
+    )
+
+    simulation_ld = [
+        declare_gazebo_software_gl,
+        gazebo_qt_xcb,
+        gazebo_optional_software_gl,
+        OpaqueFunction(function=_opaque_refresh_gazebo_paths),
+        turtlebot3_house_gazebo_cmd,
     ]
 
     robots = ['robot1', 'robot2']
