@@ -10,10 +10,22 @@ from multi_robot_mission_stack.coordinator import (
     assign_named_parallel,
     assign_named_sequence,
     assign_team_named_mission,
+    execute_team_named_mission_spec,
+    execute_team_named_mission_specs,
+    inspect_team_named_mission_spec,
+    inspect_team_named_mission_specs,
     normalize_team_named_mission_spec,
     preflight_team_named_mission_spec,
+    preflight_team_named_mission_specs,
+    preview_team_named_mission_spec,
+    preview_team_named_mission_specs,
     run_team_named_mission_spec,
+    run_team_named_mission_specs,
     summarize_sequence_result,
+    summarize_team_named_mission_result,
+    summarize_team_named_mission_specs_result,
+    validate_team_named_mission_specs_summary,
+    validate_team_named_mission_summary,
 )
 
 
@@ -695,3 +707,982 @@ def test_preflight_team_named_mission_spec_normalization_error() -> None:
     assert out["normalized_steps"] == []
     assert out["summary"]["error"] == "steps must be a list"
     assert out["mode"] == "sequence"
+
+
+def test_preview_team_named_mission_spec_sequence_success() -> None:
+    out = preview_team_named_mission_spec(
+        {
+            "mode": "sequence",
+            "steps": [
+                {"robot_id": "robot1", "location_name": "base"},
+                {"robot_id": "robot2", "location_name": "goal"},
+            ],
+            "options": {"continue_on_failure": True},
+        }
+    )
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["step_count"] == 2
+    assert out["lines"][:2] == ["Mode: sequence", "Steps: 2"]
+    assert out["lines"][2] == "Step 0: robot1 -> base"
+    assert out["lines"][3] == "Step 1: robot2 -> goal"
+    assert out["lines"][-1] == "Continue on failure: true"
+    assert out["summary"]["error"] is None
+    assert "sequence" in out["summary"]["message"].lower()
+
+
+def test_preview_team_named_mission_spec_parallel_max_workers() -> None:
+    out = preview_team_named_mission_spec(
+        {
+            "mode": "parallel",
+            "steps": [
+                {"robot_id": "robot1", "location_name": "base"},
+                {"robot_id": "robot2", "location_name": "test_goal"},
+            ],
+            "options": {"max_workers": 3},
+        }
+    )
+    assert out["ok"] is True
+    assert out["lines"][-1] == "Max workers: 3"
+    assert "Continue on failure" not in "\n".join(out["lines"])
+    assert "parallel" in out["summary"]["message"].lower()
+
+
+def test_preview_team_named_mission_spec_preflight_failure() -> None:
+    out = preview_team_named_mission_spec("nope")  # type: ignore[arg-type]
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "error"
+    assert out["lines"] == ["Mode: invalid", "Preflight failed: spec must be a dict"]
+    assert out["summary"]["error"] == "spec must be a dict"
+
+
+def test_preview_team_named_mission_spec_lines_normalized_order() -> None:
+    out = preview_team_named_mission_spec(
+        {
+            "mode": "sequence",
+            "steps": [
+                {"robot_id": "  z  ", "location_name": " first "},
+                {"robot_id": "a", "location_name": "second"},
+            ],
+        }
+    )
+    assert out["lines"][2:4] == [
+        "Step 0: z -> first",
+        "Step 1: a -> second",
+    ]
+
+
+def test_preflight_team_named_mission_specs_two_valid() -> None:
+    specs = [
+        {
+            "mode": "sequence",
+            "steps": [{"robot_id": "r1", "location_name": "a"}],
+        },
+        {
+            "mode": "parallel",
+            "steps": [
+                {"robot_id": "r1", "location_name": "b"},
+                {"robot_id": "r2", "location_name": "c"},
+            ],
+        },
+    ]
+    out = preflight_team_named_mission_specs(specs)
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["total_specs"] == 2
+    assert out["ok_count"] == 2
+    assert out["error_count"] == 0
+    assert len(out["results"]) == 2
+    assert out["results"][0]["index"] == 0 and out["results"][0]["ok"] is True
+    assert out["results"][1]["index"] == 1 and out["results"][1]["ok"] is True
+    assert out["summary"]["message"] == "Preflight passed for 2 mission specs."
+    assert out["summary"]["error"] is None
+    assert "normalized_steps" not in out["results"][0]
+
+
+def test_preflight_team_named_mission_specs_mixed() -> None:
+    specs = [
+        {"mode": "sequence", "steps": [{"robot_id": "r1", "location_name": "a"}]},
+        "bad",  # type: ignore[list-item]
+    ]
+    out = preflight_team_named_mission_specs(specs)
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "error"
+    assert out["ok_count"] == 1
+    assert out["error_count"] == 1
+    assert out["results"][0]["ok"] is True
+    assert out["results"][1]["ok"] is False
+    assert out["results"][1]["summary"]["error"] == "spec must be a dict"
+    assert out["summary"]["message"] == "Preflight completed with 1 invalid mission spec."
+
+
+def test_preflight_team_named_mission_specs_not_list() -> None:
+    out = preflight_team_named_mission_specs({})  # type: ignore[arg-type]
+    assert out["ok"] is False
+    assert out["total_specs"] == 0
+    assert out["results"] == []
+    assert out["summary"]["error"] == "specs must be a list"
+
+
+def test_preflight_team_named_mission_specs_order_preserved() -> None:
+    specs = [
+        "x",  # type: ignore[list-item]
+        {"mode": "sequence", "steps": [{"robot_id": "r1", "location_name": "a"}]},
+    ]
+    out = preflight_team_named_mission_specs(specs)
+    assert [r["index"] for r in out["results"]] == [0, 1]
+    assert out["results"][0]["ok"] is False
+    assert out["results"][1]["ok"] is True
+    assert out["results"][0]["mode"] == "invalid"
+
+
+def test_preview_team_named_mission_specs_two_valid() -> None:
+    specs = [
+        {"mode": "sequence", "steps": [{"robot_id": "robot1", "location_name": "base"}]},
+        {
+            "mode": "parallel",
+            "steps": [
+                {"robot_id": "r1", "location_name": "b"},
+                {"robot_id": "r2", "location_name": "c"},
+            ],
+        },
+    ]
+    out = preview_team_named_mission_specs(specs)
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["total_specs"] == 2
+    assert out["ok_count"] == 2
+    assert out["error_count"] == 0
+    assert out["summary"]["message"] == "Preview generated for 2 mission specs."
+    assert out["results"][0]["lines"][0] == "Mode: sequence"
+    assert out["results"][0]["lines"][2] == "Step 0: robot1 -> base"
+    assert "lines" in out["results"][0]
+
+
+def test_preview_team_named_mission_specs_mixed() -> None:
+    specs = [
+        {"mode": "sequence", "steps": [{"robot_id": "r1", "location_name": "a"}]},
+        "bad",  # type: ignore[list-item]
+    ]
+    out = preview_team_named_mission_specs(specs)
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "error"
+    assert out["ok_count"] == 1
+    assert out["error_count"] == 1
+    assert out["results"][1]["lines"] == ["Mode: invalid", "Preflight failed: spec must be a dict"]
+    assert out["summary"]["message"] == "Preview completed with 1 invalid mission spec."
+
+
+def test_preview_team_named_mission_specs_not_list() -> None:
+    out = preview_team_named_mission_specs(())  # type: ignore[arg-type]
+    assert out["ok"] is False
+    assert out["total_specs"] == 0
+    assert out["results"] == []
+    assert out["summary"]["error"] == "specs must be a list"
+
+
+def test_preview_team_named_mission_specs_order_preserved() -> None:
+    specs = [
+        "x",  # type: ignore[list-item]
+        {"mode": "sequence", "steps": [{"robot_id": "r1", "location_name": "a"}]},
+    ]
+    out = preview_team_named_mission_specs(specs)
+    assert [r["index"] for r in out["results"]] == [0, 1]
+    assert out["results"][0]["ok"] is False
+    assert out["results"][1]["ok"] is True
+
+
+def test_run_team_named_mission_specs_two_success() -> None:
+    ok_row = {"ok": True, "mode": "sequence", "overall_outcome": "success", "summary": {"x": 1}}
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        return_value=ok_row,
+    ) as mock_run:
+        out = run_team_named_mission_specs([{}, {}])
+
+    assert mock_run.call_count == 2
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["total_specs"] == 2
+    assert out["specs_run"] == 2
+    assert out["succeeded_count"] == 2
+    assert out["failed_count"] == 0
+    assert out["stopped_early"] is False
+    assert out["summary"]["message"] == "Executed 2 mission specs successfully."
+
+
+def test_run_team_named_mission_specs_stops_after_first_failure() -> None:
+    fail_row = {"ok": False, "mode": "sequence", "overall_outcome": "failure", "summary": {}}
+    ok_row = {"ok": True, "mode": "sequence", "overall_outcome": "success", "summary": {}}
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        side_effect=[fail_row, ok_row],
+    ) as mock_run:
+        out = run_team_named_mission_specs([{}, {}], continue_on_batch_failure=False)
+
+    mock_run.assert_called_once()
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "failure"
+    assert out["specs_run"] == 1
+    assert out["failed_count"] == 1
+    assert out["stopped_early"] is True
+    assert out["summary"]["message"] == "Execution stopped after 1 failed mission spec."
+
+
+def test_run_team_named_mission_specs_continue_on_batch_failure() -> None:
+    fail_row = {"ok": False, "mode": "sequence", "overall_outcome": "failure", "summary": {}}
+    ok_row = {"ok": True, "mode": "parallel", "overall_outcome": "success", "summary": {}}
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        side_effect=[fail_row, ok_row, fail_row],
+    ) as mock_run:
+        out = run_team_named_mission_specs([{}, {}, {}], continue_on_batch_failure=True)
+
+    assert mock_run.call_count == 3
+    assert out["specs_run"] == 3
+    assert out["succeeded_count"] == 1
+    assert out["failed_count"] == 2
+    assert out["stopped_early"] is False
+    assert out["summary"]["message"] == "Execution completed with 2 failed mission specs."
+
+
+def test_run_team_named_mission_specs_not_list() -> None:
+    out = run_team_named_mission_specs("nope")  # type: ignore[arg-type]
+    assert out["overall_outcome"] == "error"
+    assert out["summary"]["error"] == "specs must be a list"
+    assert out["results"] == []
+
+
+def test_run_team_named_mission_specs_order_preserved() -> None:
+    calls: list[int] = []
+
+    def _fake(spec: Any) -> Dict[str, Any]:
+        calls.append(id(spec))
+        return {"ok": True, "mode": "sequence", "overall_outcome": "success", "summary": {}}
+
+    s1 = {"a": 1}
+    s2 = {"b": 2}
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        side_effect=_fake,
+    ):
+        out = run_team_named_mission_specs([s1, s2])
+
+    assert calls == [id(s1), id(s2)]
+    assert [r["index"] for r in out["results"]] == [0, 1]
+
+
+def test_summarize_team_named_mission_specs_result_full_success() -> None:
+    batch = {
+        "ok": True,
+        "overall_outcome": "success",
+        "total_specs": 2,
+        "specs_run": 2,
+        "succeeded_count": 2,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_batch_failure": False,
+        "results": [
+            {"index": 0, "ok": True, "mode": "sequence", "overall_outcome": "success", "summary": {}},
+            {"index": 1, "ok": True, "mode": "parallel", "overall_outcome": "success", "summary": {}},
+        ],
+        "summary": {},
+    }
+    s = summarize_team_named_mission_specs_result(batch)
+    assert s["ok"] is True
+    assert s["overall_outcome"] == "success"
+    assert s["mission_state"] == "completed"
+    assert s["failed_spec_indices"] == []
+    assert s["succeeded_spec_indices"] == [0, 1]
+    assert s["first_failed_spec_index"] is None
+    assert s["last_spec_index_run"] == 1
+    assert s["message"] == "Batch execution completed successfully."
+
+
+def test_summarize_team_named_mission_specs_result_failed_fast() -> None:
+    batch = {
+        "ok": False,
+        "overall_outcome": "failure",
+        "total_specs": 2,
+        "specs_run": 1,
+        "succeeded_count": 0,
+        "failed_count": 1,
+        "stopped_early": True,
+        "continue_on_batch_failure": False,
+        "results": [{"index": 0, "ok": False, "mode": "sequence", "overall_outcome": "failure", "summary": {}}],
+        "summary": {},
+    }
+    s = summarize_team_named_mission_specs_result(batch)
+    assert s["mission_state"] == "failed_fast"
+    assert s["message"] == "Batch execution failed at spec 1 and stopped early."
+
+
+def test_summarize_team_named_mission_specs_result_partial_failure() -> None:
+    batch = {
+        "ok": False,
+        "overall_outcome": "failure",
+        "total_specs": 3,
+        "specs_run": 3,
+        "succeeded_count": 1,
+        "failed_count": 2,
+        "stopped_early": False,
+        "continue_on_batch_failure": True,
+        "results": [
+            {"index": 0, "ok": True, "mode": "sequence", "overall_outcome": "success", "summary": {}},
+            {"index": 1, "ok": False, "mode": "sequence", "overall_outcome": "failure", "summary": {}},
+            {"index": 2, "ok": False, "mode": "sequence", "overall_outcome": "failure", "summary": {}},
+        ],
+        "summary": {},
+    }
+    s = summarize_team_named_mission_specs_result(batch)
+    assert s["mission_state"] == "partial_failure"
+    assert s["failed_spec_indices"] == [1, 2]
+    assert s["message"] == "Batch execution completed with 2 failed specs."
+
+
+def test_summarize_team_named_mission_specs_result_malformed() -> None:
+    s = summarize_team_named_mission_specs_result("x")  # type: ignore[arg-type]
+    assert s["ok"] is False
+    assert s["overall_outcome"] == "error"
+    assert s["mission_state"] == "invalid"
+    assert s["message"] == "Invalid batch execution result."
+
+
+def test_summarize_team_named_mission_result_sequence_success() -> None:
+    inner = {
+        "overall_outcome": "success",
+        "total_steps": 2,
+        "steps_run": 2,
+        "succeeded_count": 2,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_failure": False,
+        "steps": [
+            {"index": 0, "step_outcome": "succeeded"},
+            {"index": 1, "step_outcome": "succeeded"},
+        ],
+    }
+    r = summarize_team_named_mission_result(
+        {"ok": True, "mode": "sequence", "overall_outcome": "success", "summary": inner}
+    )
+    assert r["ok"] is True
+    assert r["mode"] == "sequence"
+    assert r["mission_state"] == "completed"
+    assert r["stopped_early"] is False
+    assert r["message"] == "Sequence mission completed successfully."
+
+
+def test_summarize_team_named_mission_result_sequence_failed_fast() -> None:
+    inner = {
+        "overall_outcome": "failure",
+        "total_steps": 2,
+        "steps_run": 1,
+        "succeeded_count": 0,
+        "failed_count": 1,
+        "stopped_early": True,
+        "continue_on_failure": False,
+        "steps": [{"index": 0, "step_outcome": "failed"}],
+    }
+    r = summarize_team_named_mission_result(
+        {"ok": False, "mode": "sequence", "overall_outcome": "failure", "summary": inner}
+    )
+    assert r["mission_state"] == "failed_fast"
+    assert r["message"] == "Sequence mission failed at step 1 and stopped early."
+
+
+def test_summarize_team_named_mission_result_parallel_partial() -> None:
+    inner = {
+        "overall_outcome": "failure",
+        "total_steps": 2,
+        "steps_run": 2,
+        "succeeded_count": 1,
+        "failed_count": 1,
+        "max_workers": 2,
+        "steps": [
+            {"index": 0, "step_outcome": "succeeded"},
+            {"index": 1, "step_outcome": "failed"},
+        ],
+    }
+    r = summarize_team_named_mission_result(
+        {"ok": False, "mode": "parallel", "overall_outcome": "failure", "summary": inner}
+    )
+    assert r["mode"] == "parallel"
+    assert r["mission_state"] == "partial_failure"
+    assert r["stopped_early"] is None
+    assert r["continue_on_failure"] is None
+    assert r["failed_step_indices"] == [1]
+    assert r["message"] == "Parallel mission completed with 1 failed step."
+
+
+def test_summarize_team_named_mission_result_malformed() -> None:
+    r = summarize_team_named_mission_result({"mode": "sequence", "overall_outcome": "error", "summary": {}})
+    assert r["overall_outcome"] == "error"
+    assert r["mission_state"] == "invalid"
+    assert r["mode"] == "invalid"
+    assert r["message"] == "Invalid team mission result."
+
+
+def test_inspect_team_named_mission_spec_sequence_success() -> None:
+    spec = {
+        "mode": "sequence",
+        "steps": [
+            {"robot_id": "robot1", "location_name": "base"},
+            {"robot_id": "robot2", "location_name": "goal"},
+        ],
+    }
+    out = inspect_team_named_mission_spec(spec)
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["mode"] == "sequence"
+    assert out["step_count"] == 2
+    assert out["preflight"]["ok"] is True
+    assert out["preview"]["ok"] is True
+    assert out["summary"]["message"] == "Mission spec inspection completed successfully."
+    assert out["summary"]["error"] is None
+
+
+def test_inspect_team_named_mission_spec_parallel_success() -> None:
+    spec = {
+        "mode": "parallel",
+        "steps": [
+            {"robot_id": "robot1", "location_name": "a"},
+            {"robot_id": "robot2", "location_name": "b"},
+        ],
+    }
+    out = inspect_team_named_mission_spec(spec)
+    assert out["ok"] is True
+    assert out["mode"] == "parallel"
+    assert out["preflight"]["overall_outcome"] == "success"
+    assert out["preview"]["overall_outcome"] == "success"
+
+
+def test_inspect_team_named_mission_spec_preflight_failure() -> None:
+    spec = {
+        "mode": "parallel",
+        "steps": [
+            {"robot_id": "r1", "location_name": "a"},
+            {"robot_id": "r1", "location_name": "b"},
+        ],
+    }
+    out = inspect_team_named_mission_spec(spec)
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "error"
+    assert out["preflight"]["ok"] is False
+    assert "duplicate" in str(out["summary"]["error"]).lower()
+    assert out["summary"]["message"] == "Mission spec inspection failed."
+    assert len(out["preview"]["lines"]) >= 2
+
+
+def test_inspect_team_named_mission_spec_preview_lines_order() -> None:
+    spec = {
+        "mode": "sequence",
+        "steps": [
+            {"robot_id": "z", "location_name": "first"},
+            {"robot_id": "a", "location_name": "second"},
+        ],
+    }
+    out = inspect_team_named_mission_spec(spec)
+    expected = preview_team_named_mission_spec(spec)["lines"]
+    assert out["preview"]["lines"] == expected
+
+
+def test_inspect_team_named_mission_specs_two_valid() -> None:
+    specs = [
+        {"mode": "sequence", "steps": [{"robot_id": "r1", "location_name": "a"}]},
+        {
+            "mode": "parallel",
+            "steps": [
+                {"robot_id": "r1", "location_name": "b"},
+                {"robot_id": "r2", "location_name": "c"},
+            ],
+        },
+    ]
+    out = inspect_team_named_mission_specs(specs)
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["total_specs"] == 2
+    assert out["ok_count"] == 2
+    assert out["error_count"] == 0
+    assert len(out["results"]) == 2
+    assert out["summary"]["message"] == "Inspection completed successfully for 2 mission specs."
+    assert out["results"][0]["preflight"]["ok"] is True
+    assert out["results"][1]["preview"]["lines"][0] == "Mode: parallel"
+
+
+def test_inspect_team_named_mission_specs_mixed() -> None:
+    specs = [
+        {"mode": "sequence", "steps": [{"robot_id": "r1", "location_name": "a"}]},
+        {
+            "mode": "parallel",
+            "steps": [
+                {"robot_id": "r1", "location_name": "x"},
+                {"robot_id": "r1", "location_name": "y"},
+            ],
+        },
+    ]
+    out = inspect_team_named_mission_specs(specs)
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "error"
+    assert out["ok_count"] == 1
+    assert out["error_count"] == 1
+    assert out["results"][0]["ok"] is True
+    assert out["results"][1]["ok"] is False
+    assert out["summary"]["message"] == "Inspection completed with 1 invalid mission spec."
+
+
+def test_inspect_team_named_mission_specs_not_list() -> None:
+    out = inspect_team_named_mission_specs({})  # type: ignore[arg-type]
+    assert out["ok"] is False
+    assert out["total_specs"] == 0
+    assert out["results"] == []
+    assert out["summary"]["error"] == "specs must be a list"
+
+
+def test_execute_team_named_mission_spec_sequence_success() -> None:
+    run = {
+        "ok": True,
+        "mode": "sequence",
+        "overall_outcome": "success",
+        "summary": {"overall_outcome": "success", "total_steps": 1, "steps_run": 1, "steps": []},
+    }
+    ex = {
+        "ok": True,
+        "mode": "sequence",
+        "overall_outcome": "success",
+        "mission_state": "completed",
+        "total_steps": 1,
+        "steps_run": 1,
+        "succeeded_count": 1,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_failure": False,
+        "failed_step_indices": [],
+        "succeeded_step_indices": [],
+        "first_failed_step_index": None,
+        "last_step_index_run": None,
+        "message": "Sequence mission completed successfully.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        return_value=run,
+    ), patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_result",
+        return_value=ex,
+    ):
+        out = execute_team_named_mission_spec({})
+
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["run_result"]["ok"] is True
+    assert out["execution_summary"]["mission_state"] == "completed"
+    assert out["summary"]["message"] == "Mission spec executed successfully."
+    assert out["summary"]["error"] is None
+
+
+def test_execute_team_named_mission_spec_sequence_failed_fast() -> None:
+    run = {
+        "ok": False,
+        "mode": "sequence",
+        "overall_outcome": "failure",
+        "summary": {},
+    }
+    ex = {
+        "ok": False,
+        "mode": "sequence",
+        "overall_outcome": "failure",
+        "mission_state": "failed_fast",
+        "total_steps": 2,
+        "steps_run": 1,
+        "succeeded_count": 0,
+        "failed_count": 1,
+        "stopped_early": True,
+        "continue_on_failure": False,
+        "failed_step_indices": [0],
+        "succeeded_step_indices": [],
+        "first_failed_step_index": 0,
+        "last_step_index_run": 0,
+        "message": "Sequence mission failed at step 1 and stopped early.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        return_value=run,
+    ), patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_result",
+        return_value=ex,
+    ):
+        out = execute_team_named_mission_spec({})
+
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "failure"
+    assert out["execution_summary"]["mission_state"] == "failed_fast"
+    assert out["summary"]["error"] == "Sequence mission failed at step 1 and stopped early."
+
+
+def test_execute_team_named_mission_spec_parallel_partial() -> None:
+    run = {
+        "ok": False,
+        "mode": "parallel",
+        "overall_outcome": "failure",
+        "summary": {},
+    }
+    ex = {
+        "ok": False,
+        "mode": "parallel",
+        "overall_outcome": "failure",
+        "mission_state": "partial_failure",
+        "total_steps": 2,
+        "steps_run": 2,
+        "succeeded_count": 1,
+        "failed_count": 1,
+        "stopped_early": None,
+        "continue_on_failure": None,
+        "failed_step_indices": [1],
+        "succeeded_step_indices": [0],
+        "first_failed_step_index": 1,
+        "last_step_index_run": 1,
+        "message": "Parallel mission completed with 1 failed step.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        return_value=run,
+    ), patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_result",
+        return_value=ex,
+    ):
+        out = execute_team_named_mission_spec({})
+
+    assert out["mode"] == "parallel"
+    assert out["execution_summary"]["mission_state"] == "partial_failure"
+    assert out["summary"]["error"] == "Parallel mission completed with 1 failed step."
+
+
+def test_execute_team_named_mission_specs_two_success() -> None:
+    run = {
+        "ok": True,
+        "overall_outcome": "success",
+        "total_specs": 2,
+        "specs_run": 2,
+        "succeeded_count": 2,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_batch_failure": False,
+        "results": [],
+        "summary": {"message": "ok", "error": None},
+    }
+    ex = {
+        "ok": True,
+        "overall_outcome": "success",
+        "mission_state": "completed",
+        "total_specs": 2,
+        "specs_run": 2,
+        "succeeded_count": 2,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_batch_failure": False,
+        "failed_spec_indices": [],
+        "succeeded_spec_indices": [0, 1],
+        "first_failed_spec_index": None,
+        "last_spec_index_run": 1,
+        "message": "Batch execution completed successfully.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_specs",
+        return_value=run,
+    ), patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_specs_result",
+        return_value=ex,
+    ):
+        out = execute_team_named_mission_specs([{}, {}])
+
+    assert out["ok"] is True
+    assert out["overall_outcome"] == "success"
+    assert out["summary"]["message"] == "Batch mission specs executed successfully."
+    assert out["run_result"]["total_specs"] == 2
+
+
+def test_execute_team_named_mission_specs_stop_early() -> None:
+    run = {
+        "ok": False,
+        "overall_outcome": "failure",
+        "total_specs": 2,
+        "specs_run": 1,
+        "succeeded_count": 0,
+        "failed_count": 1,
+        "stopped_early": True,
+        "continue_on_batch_failure": False,
+        "results": [{"index": 0, "ok": False, "mode": "sequence", "overall_outcome": "failure", "summary": {}}],
+        "summary": {"message": "stopped", "error": None},
+    }
+    ex = {
+        "ok": False,
+        "overall_outcome": "failure",
+        "mission_state": "failed_fast",
+        "total_specs": 2,
+        "specs_run": 1,
+        "succeeded_count": 0,
+        "failed_count": 1,
+        "stopped_early": True,
+        "continue_on_batch_failure": False,
+        "failed_spec_indices": [0],
+        "succeeded_spec_indices": [],
+        "first_failed_spec_index": 0,
+        "last_spec_index_run": 0,
+        "message": "Batch execution failed at spec 1 and stopped early.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_specs",
+        return_value=run,
+    ), patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_specs_result",
+        return_value=ex,
+    ):
+        out = execute_team_named_mission_specs([{}, {}])
+
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "failure"
+    assert out["summary"]["message"] == ex["message"]
+    assert out["execution_summary"]["mission_state"] == "failed_fast"
+
+
+def test_execute_team_named_mission_specs_continue_on_failure() -> None:
+    run = {
+        "ok": False,
+        "overall_outcome": "failure",
+        "total_specs": 3,
+        "specs_run": 3,
+        "succeeded_count": 1,
+        "failed_count": 2,
+        "stopped_early": False,
+        "continue_on_batch_failure": True,
+        "results": [],
+        "summary": {"message": "done", "error": None},
+    }
+    ex = {
+        "ok": False,
+        "overall_outcome": "failure",
+        "mission_state": "partial_failure",
+        "total_specs": 3,
+        "specs_run": 3,
+        "succeeded_count": 1,
+        "failed_count": 2,
+        "stopped_early": False,
+        "continue_on_batch_failure": True,
+        "failed_spec_indices": [1, 2],
+        "succeeded_spec_indices": [0],
+        "first_failed_spec_index": 1,
+        "last_spec_index_run": 2,
+        "message": "Batch execution completed with 2 failed specs.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_specs",
+        return_value=run,
+    ) as mock_run, patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_specs_result",
+        return_value=ex,
+    ):
+        execute_team_named_mission_specs([{}, {}, {}], continue_on_batch_failure=True)
+
+    mock_run.assert_called_once()
+    assert mock_run.call_args.kwargs.get("continue_on_batch_failure") is True
+
+
+def test_validate_team_named_mission_summary_valid() -> None:
+    s = {
+        "ok": True,
+        "mode": "sequence",
+        "overall_outcome": "success",
+        "mission_state": "completed",
+        "total_steps": 2,
+        "steps_run": 2,
+        "succeeded_count": 2,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_failure": False,
+        "failed_step_indices": [],
+        "succeeded_step_indices": [0, 1],
+        "first_failed_step_index": None,
+        "last_step_index_run": 1,
+        "message": "x",
+    }
+    v = validate_team_named_mission_summary(s)
+    assert v["ok"] is True
+    assert v["overall_outcome"] == "success"
+    assert "consistent" in v["message"].lower()
+
+
+def test_validate_team_named_mission_summary_rejects_success_with_failures() -> None:
+    s = {
+        "ok": True,
+        "mode": "sequence",
+        "overall_outcome": "success",
+        "mission_state": "completed",
+        "total_steps": 2,
+        "steps_run": 2,
+        "succeeded_count": 1,
+        "failed_count": 1,
+        "stopped_early": False,
+        "continue_on_failure": False,
+        "failed_step_indices": [1],
+        "succeeded_step_indices": [0],
+        "first_failed_step_index": 1,
+        "last_step_index_run": 1,
+        "message": "x",
+    }
+    v = validate_team_named_mission_summary(s)
+    assert v["ok"] is False
+    assert v["errors"]
+
+
+def test_validate_team_named_mission_specs_summary_valid() -> None:
+    s = {
+        "ok": True,
+        "overall_outcome": "success",
+        "mission_state": "completed",
+        "total_specs": 2,
+        "specs_run": 2,
+        "succeeded_count": 2,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_batch_failure": False,
+        "failed_spec_indices": [],
+        "succeeded_spec_indices": [0, 1],
+        "first_failed_spec_index": None,
+        "last_spec_index_run": 1,
+        "message": "x",
+    }
+    v = validate_team_named_mission_specs_summary(s)
+    assert v["ok"] is True
+    assert v["overall_outcome"] == "success"
+
+
+def test_validate_team_named_mission_specs_summary_rejects_success_with_failures() -> None:
+    s = {
+        "ok": True,
+        "overall_outcome": "success",
+        "mission_state": "completed",
+        "total_specs": 2,
+        "specs_run": 2,
+        "succeeded_count": 1,
+        "failed_count": 1,
+        "stopped_early": False,
+        "continue_on_batch_failure": True,
+        "failed_spec_indices": [1],
+        "succeeded_spec_indices": [0],
+        "first_failed_spec_index": 1,
+        "last_spec_index_run": 1,
+        "message": "x",
+    }
+    v = validate_team_named_mission_specs_summary(s)
+    assert v["ok"] is False
+    assert v["errors"]
+
+
+def test_execute_team_named_mission_specs_malformed_input() -> None:
+    run = {
+        "ok": False,
+        "overall_outcome": "error",
+        "total_specs": 0,
+        "specs_run": 0,
+        "succeeded_count": 0,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_batch_failure": False,
+        "results": [],
+        "summary": {"message": "", "error": "specs must be a list"},
+    }
+    ex = {
+        "ok": False,
+        "overall_outcome": "error",
+        "mission_state": "invalid",
+        "total_specs": 0,
+        "specs_run": 0,
+        "succeeded_count": 0,
+        "failed_count": 0,
+        "stopped_early": False,
+        "continue_on_batch_failure": False,
+        "failed_spec_indices": [],
+        "succeeded_spec_indices": [],
+        "first_failed_spec_index": None,
+        "last_spec_index_run": None,
+        "message": "Invalid batch execution result.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_specs",
+        return_value=run,
+    ), patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_specs_result",
+        return_value=ex,
+    ):
+        out = execute_team_named_mission_specs("bad")  # type: ignore[arg-type]
+
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "error"
+    assert out["summary"]["message"] == "Invalid batch mission execution."
+
+
+def test_execute_team_named_mission_spec_malformed_summary() -> None:
+    run = {"ok": True, "mode": "sequence", "overall_outcome": "success", "summary": {}}
+    ex = {
+        "ok": False,
+        "mode": "invalid",
+        "overall_outcome": "error",
+        "mission_state": "invalid",
+        "total_steps": 0,
+        "steps_run": 0,
+        "succeeded_count": 0,
+        "failed_count": 0,
+        "stopped_early": None,
+        "continue_on_failure": None,
+        "failed_step_indices": [],
+        "succeeded_step_indices": [],
+        "first_failed_step_index": None,
+        "last_step_index_run": None,
+        "message": "Invalid team mission result.",
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.run_team_named_mission_spec",
+        return_value=run,
+    ), patch(
+        "multi_robot_mission_stack.coordinator.coordinator.summarize_team_named_mission_result",
+        return_value=ex,
+    ):
+        out = execute_team_named_mission_spec({})
+
+    assert out["ok"] is False
+    assert out["overall_outcome"] == "error"
+    assert out["summary"]["error"] == "Invalid team mission result."
+
+
+def test_inspect_team_named_mission_specs_order_preserved() -> None:
+    order: list[int] = []
+
+    def _fake(spec: Any) -> Dict[str, Any]:
+        order.append(id(spec))
+        return {
+            "ok": True,
+            "mode": "sequence",
+            "overall_outcome": "success",
+            "step_count": 0,
+            "preflight": {"ok": True, "overall_outcome": "success", "summary": {"message": "", "error": None}},
+            "preview": {
+                "ok": True,
+                "overall_outcome": "success",
+                "lines": [],
+                "summary": {"message": "", "error": None},
+            },
+            "summary": {"message": "", "error": None},
+        }
+
+    s1 = {"x": 1}
+    s2 = {"x": 2}
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.inspect_team_named_mission_spec",
+        side_effect=_fake,
+    ):
+        out = inspect_team_named_mission_specs([s1, s2])
+
+    assert order == [id(s1), id(s2)]
+    assert [r["index"] for r in out["results"]] == [0, 1]
