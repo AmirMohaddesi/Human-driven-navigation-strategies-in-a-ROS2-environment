@@ -1,5 +1,6 @@
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
 
+import json
 import os
 import time
 
@@ -17,6 +18,18 @@ from multi_robot_mission_stack_interfaces.srv import (
 )
 
 from .nav2_client import Nav2Client
+
+
+def _mission_log(logger: Any, event: str, level: str = "info", **fields: Any) -> None:
+    """Structured single-line JSON for grep/journald (not service responses)."""
+    payload = {"component": "mission_bridge", "event": event, **fields}
+    line = json.dumps(payload, separators=(",", ":"), default=str)
+    if level == "debug":
+        logger.debug(line)
+    elif level == "warn":
+        logger.warning(line)
+    else:
+        logger.info(line)
 
 
 class MissionBridgeNode(Node):
@@ -128,6 +141,17 @@ class MissionBridgeNode(Node):
         response.goal_id = str(data.get("goal_id", ""))
         response.nav_status = str(data.get("nav_status", ""))
 
+        _mission_log(
+            self.get_logger(),
+            "navigate_pose_result",
+            robot_id=str(request.robot_id).strip(),
+            goal_id=str(response.goal_id),
+            status=str(response.status),
+            nav_status=str(response.nav_status),
+            x=float(request.x),
+            y=float(request.y),
+            yaw=float(request.yaw),
+        )
         return response
 
     def _handle_get_navigation_state(
@@ -135,9 +159,15 @@ class MissionBridgeNode(Node):
         request: GetNavigationState.Request,
         response: GetNavigationState.Response,
     ) -> GetNavigationState.Response:
-        result = self.get_navigation_state(
-            str(request.robot_id).strip(), str(request.goal_id).strip()
+        rid, gid = str(request.robot_id).strip(), str(request.goal_id).strip()
+        _mission_log(
+            self.get_logger(),
+            "query_state_request",
+            level="debug",
+            robot_id=rid,
+            goal_id=gid,
         )
+        result = self.get_navigation_state(rid, gid)
 
         response.status = str(result.get("status", ""))
         response.message = str(result.get("message", ""))
@@ -145,6 +175,16 @@ class MissionBridgeNode(Node):
         data = result.get("data", {}) or {}
         response.nav_status = str(data.get("nav_status", ""))
 
+        _mission_log(
+            self.get_logger(),
+            "query_state_result",
+            level="debug",
+            robot_id=rid,
+            goal_id=gid,
+            status=str(response.status),
+            nav_status=str(response.nav_status),
+            message=str(response.message)[:200],
+        )
         return response
 
     def _handle_cancel_navigation(
@@ -152,9 +192,14 @@ class MissionBridgeNode(Node):
         request: CancelNavigation.Request,
         response: CancelNavigation.Response,
     ) -> CancelNavigation.Response:
-        result = self.cancel_navigation(
-            str(request.robot_id).strip(), str(request.goal_id).strip()
+        rid, cid = str(request.robot_id).strip(), str(request.goal_id).strip()
+        _mission_log(
+            self.get_logger(),
+            "cancel_request",
+            robot_id=rid,
+            goal_id=cid,
         )
+        result = self.cancel_navigation(rid, cid)
 
         response.status = str(result.get("status", ""))
         response.message = str(result.get("message", ""))
@@ -162,6 +207,15 @@ class MissionBridgeNode(Node):
         data = result.get("data", {}) or {}
         response.nav_status = str(data.get("nav_status", ""))
 
+        _mission_log(
+            self.get_logger(),
+            "cancel_result",
+            robot_id=rid,
+            goal_id=cid,
+            status=str(response.status),
+            nav_status=str(response.nav_status),
+            message=str(response.message)[:200],
+        )
         return response
 
     def _handle_navigate_to_named_location(
@@ -181,6 +235,15 @@ class MissionBridgeNode(Node):
         response.goal_id = str(data.get("goal_id", ""))
         response.nav_status = str(data.get("nav_status", ""))
 
+        _mission_log(
+            self.get_logger(),
+            "navigate_named_result",
+            robot_id=str(request.robot_id).strip(),
+            location_name=str(request.location_name).strip(),
+            goal_id=str(response.goal_id),
+            status=str(response.status),
+            nav_status=str(response.nav_status),
+        )
         return response
 
     def _get_or_create_client(self, robot_id: str) -> Nav2Client:
@@ -242,6 +305,29 @@ class MissionBridgeNode(Node):
             }
         else:
             nav_status = "rejected"
+
+        if goal_id:
+            _mission_log(
+                self.get_logger(),
+                "goal_submitted",
+                robot_id=robot_id,
+                goal_id=goal_id,
+                nav_status=nav_status,
+                status=str(status),
+                x=float(x),
+                y=float(y),
+                yaw=float(yaw),
+            )
+        else:
+            _mission_log(
+                self.get_logger(),
+                "goal_rejected",
+                level="warn",
+                robot_id=robot_id,
+                nav_status=nav_status,
+                status=str(status),
+                message=str(message)[:200],
+            )
 
         return {
             "status": status,

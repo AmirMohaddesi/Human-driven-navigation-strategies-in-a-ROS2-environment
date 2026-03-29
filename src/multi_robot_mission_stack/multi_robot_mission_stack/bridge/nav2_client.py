@@ -1,4 +1,6 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+import json
 
 import rclpy
 from rclpy.action import ActionClient
@@ -17,6 +19,7 @@ class Nav2Client:
 
     def __init__(self, node: Node, namespace: str) -> None:
         self._node = node
+        self._namespace = namespace
         action_name = f"/{namespace}/navigate_to_pose"
         self._client = ActionClient(node, NavigateToPose, action_name)
         self._goal_handle: Optional[NavigateToPose.Goal] = None  # type: ignore[assignment]
@@ -65,6 +68,18 @@ class Nav2Client:
         goal_id = str(py_uid)
         send_future = self._client.send_goal_async(goal_msg, goal_uuid=ros_goal_id)
 
+        self._node.get_logger().debug(
+            json.dumps(
+                {
+                    "component": "nav2_client",
+                    "event": "goal_async_sent",
+                    "namespace": self._namespace,
+                    "goal_id": goal_id,
+                },
+                separators=(",", ":"),
+            )
+        )
+
         def _on_goal_response(future) -> None:
             try:
                 goal_handle = future.result()
@@ -73,9 +88,30 @@ class Nav2Client:
                 return
 
             if goal_handle is None or not goal_handle.accepted:
-                self._node.get_logger().warn("NavigateToPose goal rejected by action server")
+                self._node.get_logger().info(
+                    json.dumps(
+                        {
+                            "component": "nav2_client",
+                            "event": "goal_rejected",
+                            "namespace": self._namespace,
+                            "goal_id": goal_id,
+                        },
+                        separators=(",", ":"),
+                    )
+                )
                 return
 
+            self._node.get_logger().info(
+                json.dumps(
+                    {
+                        "component": "nav2_client",
+                        "event": "goal_accepted",
+                        "namespace": self._namespace,
+                        "goal_id": goal_id,
+                    },
+                    separators=(",", ":"),
+                )
+            )
             # Store for later state/cancel operations.
             self._goal_handle = goal_handle
             self._result_future = goal_handle.get_result_async()
@@ -87,11 +123,33 @@ class Nav2Client:
         if send_future.done():
             goal_handle = send_future.result()
             if goal_handle is None or not goal_handle.accepted:
+                self._node.get_logger().info(
+                    json.dumps(
+                        {
+                            "component": "nav2_client",
+                            "event": "goal_rejected",
+                            "namespace": self._namespace,
+                            "goal_id": goal_id,
+                        },
+                        separators=(",", ":"),
+                    )
+                )
                 return {
                     "status": "failure",
                     "message": "NavigateToPose goal rejected",
                     "goal_id": "",
                 }
+            self._node.get_logger().info(
+                json.dumps(
+                    {
+                        "component": "nav2_client",
+                        "event": "goal_accepted",
+                        "namespace": self._namespace,
+                        "goal_id": goal_id,
+                    },
+                    separators=(",", ":"),
+                )
+            )
             self._goal_handle = goal_handle
             self._result_future = goal_handle.get_result_async()
             return {
@@ -100,6 +158,17 @@ class Nav2Client:
                 "goal_id": goal_id,
             }
 
+        self._node.get_logger().debug(
+            json.dumps(
+                {
+                    "component": "nav2_client",
+                    "event": "goal_submitted_pending_response",
+                    "namespace": self._namespace,
+                    "goal_id": goal_id,
+                },
+                separators=(",", ":"),
+            )
+        )
         return {
             "status": "in_progress",
             "message": "NavigateToPose goal submitted",
@@ -118,11 +187,31 @@ class Nav2Client:
         Cancel completion is reflected later via get_goal_state / the result future.
         """
         if not self.has_active_goal():
+            self._node.get_logger().debug(
+                json.dumps(
+                    {
+                        "component": "nav2_client",
+                        "event": "cancel_skipped_no_active_goal",
+                        "namespace": self._namespace,
+                    },
+                    separators=(",", ":"),
+                )
+            )
             return {
                 "nav_status": "not_cancellable",
                 "message": "No active goal to cancel"
             }
 
+        self._node.get_logger().info(
+            json.dumps(
+                {
+                    "component": "nav2_client",
+                    "event": "cancel_async_sent",
+                    "namespace": self._namespace,
+                },
+                separators=(",", ":"),
+            )
+        )
         # Fire-and-forget: do not spin/wait here. mission_bridge_node handles this from
         # a service callback on a SingleThreadedExecutor; spin_until_future_complete would
         # block the executor and prevent the cancel response from being processed (deadlock

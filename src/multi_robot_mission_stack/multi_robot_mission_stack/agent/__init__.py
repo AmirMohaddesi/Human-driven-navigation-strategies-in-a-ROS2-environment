@@ -13,6 +13,9 @@ from .mission_graph import MissionGraph
 from .mission_policy import MissionPolicy
 from .mission_tools import MissionTools
 from .mock_mission_client import MockMissionClient
+from .parallel_utils import run_parallel_named_navigation
+from .sequence_utils import run_sequential_named_navigation
+from .wait_utils import terminal_outcome, wait_for_terminal_navigation_state
 from .policy_config import MissionPolicyConfig, build_default_policy_config
 
 __all__ = [
@@ -28,5 +31,9 @@ __all__ = [
     "MissionPolicyConfig",
     "MissionTools",
     "MockMissionClient",
+    "run_parallel_named_navigation",
+    "run_sequential_named_navigation",
+    "terminal_outcome",
+    "wait_for_terminal_navigation_state",
     "build_default_policy_config",
 ]
