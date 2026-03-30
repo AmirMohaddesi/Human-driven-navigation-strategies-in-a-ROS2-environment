@@ -379,6 +379,107 @@ def normalize_team_named_mission_spec(
     }
 
 
+def validate_team_named_mission_spec_contract(spec: Any) -> Dict[str, Any]:
+    """Lightweight team mission spec v1 contract: shape, version, and mode support only (pure, no ROS)."""
+    bad = "Mission spec v1 contract violation."
+    good = "Mission spec satisfies v1 contract."
+    if not isinstance(spec, dict):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "message": bad,
+            "errors": ["spec must be a dict"],
+        }
+
+    errors: List[str] = []
+    if spec.get("version") != "v1":
+        errors.append('version must be exactly "v1"')
+
+    if "mode" not in spec:
+        errors.append("missing mode")
+        mnorm = ""
+    else:
+        mnorm = str(spec["mode"]).strip().lower()
+        if mnorm not in ("sequence", "parallel"):
+            errors.append("mode must be sequence or parallel")
+
+    if "steps" not in spec:
+        errors.append("missing steps")
+        steps_raw: Any = None
+    else:
+        steps_raw = spec["steps"]
+        if not isinstance(steps_raw, list):
+            errors.append("steps must be a list")
+            steps_raw = []
+
+    if "options" in spec and not isinstance(spec["options"], dict):
+        errors.append("options must be a dict when present")
+
+    if isinstance(steps_raw, list):
+        seen_parallel: set[str] = set()
+        for i, raw_step in enumerate(steps_raw):
+            if not isinstance(raw_step, dict):
+                errors.append(f"step {i} must be a dict")
+                continue
+            rid = raw_step.get("robot_id")
+            loc = raw_step.get("location_name")
+            rs = "" if rid is None else str(rid).strip()
+            ls = "" if loc is None else str(loc).strip()
+            if not rs:
+                errors.append(f"step {i} has empty robot_id")
+            if not ls:
+                errors.append(f"step {i} has empty location_name")
+            if mnorm == "parallel" and rs:
+                if rs in seen_parallel:
+                    errors.append("duplicate robot_id in parallel spec")
+                seen_parallel.add(rs)
+
+    if errors:
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": errors}
+    return {"ok": True, "overall_outcome": "success", "message": good, "errors": []}
+
+
+def validate_team_named_mission_specs_contract(specs: Any) -> Dict[str, Any]:
+    """Batch mission spec v1 contract: each item must satisfy ``validate_team_named_mission_spec_contract``."""
+    bad = "Mission specs batch v1 contract violation."
+    good = "All mission specs satisfy v1 contract."
+    if not isinstance(specs, list):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "message": bad,
+            "errors": ["specs must be a list"],
+            "spec_count": 0,
+        }
+
+    all_errors: List[str] = []
+    for i, item in enumerate(specs):
+        if not isinstance(item, dict):
+            all_errors.append(f"spec[{i}]: spec must be a dict")
+            continue
+        r = validate_team_named_mission_spec_contract(item)
+        if not r.get("ok"):
+            for e in r.get("errors", []):
+                all_errors.append(f"spec[{i}]: {e}")
+
+    n = len(specs)
+    if all_errors:
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "message": bad,
+            "errors": all_errors,
+            "spec_count": n,
+        }
+    return {
+        "ok": True,
+        "overall_outcome": "success",
+        "message": good,
+        "errors": [],
+        "spec_count": n,
+    }
+
+
 def assign_team_named_mission(
     steps: Any,
     mode: str = "sequence",
@@ -552,6 +653,7 @@ def summarize_team_named_mission_specs_result(batch_result: Any) -> Dict[str, An
     def _invalid() -> Dict[str, Any]:
         return {
             "ok": False,
+            "version": "v1",
             "overall_outcome": "error",
             "mission_state": "invalid",
             "total_specs": 0,
@@ -633,6 +735,7 @@ def summarize_team_named_mission_specs_result(batch_result: Any) -> Dict[str, An
 
     return {
         "ok": overall_outcome == "success",
+        "version": "v1",
         "overall_outcome": overall_outcome,
         "mission_state": mission_state,
         "total_specs": total_specs,
@@ -689,9 +792,55 @@ def execute_team_named_mission_specs(
 
     return {
         "ok": top_ok,
+        "version": "v1",
         "overall_outcome": top_oo,
         "run_result": run_compact,
         "execution_summary": ex,
+        "summary": {"message": top_msg, "error": top_err},
+    }
+
+
+def execute_team_named_mission_specs_checked(
+    specs: Any,
+    continue_on_batch_failure: bool = False,
+) -> Dict[str, Any]:
+    """Run several mission specs, summarize, and validate batch summary invariants (ROS via ``execute_team_named_mission_specs``)."""
+    exe = execute_team_named_mission_specs(specs, continue_on_batch_failure=continue_on_batch_failure)
+    es = exe.get("execution_summary")
+    val = validate_team_named_mission_specs_summary(es if isinstance(es, dict) else {})
+
+    exe_ok = bool(exe.get("ok"))
+    val_ok = bool(val.get("ok"))
+    top_ok = exe_ok and val_ok
+
+    if top_ok:
+        top_oo = "success"
+        top_msg = "Batch mission specs executed and validated successfully."
+        top_err = None
+    else:
+        top_msg = ""
+        if val.get("overall_outcome") == "error":
+            top_oo = "error"
+        else:
+            top_oo = str(exe.get("overall_outcome", "error"))
+
+        if not val_ok:
+            top_err = str(val.get("message", "")) if val.get("message") else None
+        else:
+            esum = exe.get("summary") if isinstance(exe.get("summary"), dict) else {}
+            if esum.get("error") is not None:
+                top_err = str(esum["error"])
+            else:
+                inner = exe.get("execution_summary") if isinstance(exe.get("execution_summary"), dict) else {}
+                im = inner.get("message")
+                top_err = str(im) if im else None
+
+    return {
+        "ok": top_ok,
+        "version": "v1",
+        "overall_outcome": top_oo,
+        "execution": exe,
+        "validation": val,
         "summary": {"message": top_msg, "error": top_err},
     }
 
@@ -1132,6 +1281,7 @@ def inspect_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
 
     return {
         "ok": top_ok,
+        "version": "v1",
         "mode": mode,
         "overall_outcome": "success" if top_ok else "error",
         "step_count": step_count,
@@ -1141,11 +1291,128 @@ def inspect_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
     }
 
 
+def validate_team_named_mission_inspection(inspection: Any) -> Dict[str, Any]:
+    """Check internal consistency of ``inspect_team_named_mission_spec`` output (pure, no ROS)."""
+    good = "Mission inspection is internally consistent."
+    bad = "Mission inspection is invalid."
+    if not isinstance(inspection, dict):
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": ["inspection must be a dict"]}
+
+    req_top = ("ok", "mode", "overall_outcome", "step_count", "preflight", "preview", "summary")
+    errors: List[str] = []
+    for k in req_top:
+        if k not in inspection:
+            errors.append(f"missing {k}")
+
+    sc_raw = inspection.get("step_count")
+    if not isinstance(sc_raw, int) or isinstance(sc_raw, bool):
+        errors.append("step_count must be an integer")
+
+    mode_s = str(inspection.get("mode", "")).strip().lower()
+    if mode_s not in ("sequence", "parallel", "invalid"):
+        errors.append("mode must be sequence, parallel, or invalid")
+
+    oo = inspection.get("overall_outcome")
+    iok = inspection.get("ok")
+    if oo == "success" and iok is not True:
+        errors.append("overall_outcome success requires ok true")
+    if iok is True and oo != "success":
+        errors.append("ok true requires overall_outcome success")
+
+    pf = inspection.get("preflight")
+    pv = inspection.get("preview")
+    pv_lines: Any = None
+    if not isinstance(pf, dict):
+        errors.append("preflight must be a dict")
+    if not isinstance(pv, dict):
+        errors.append("preview must be a dict")
+
+    if isinstance(pf, dict):
+        for k in ("ok", "overall_outcome", "summary"):
+            if k not in pf:
+                errors.append(f"preflight missing {k}")
+        pf_sum = pf.get("summary") if isinstance(pf.get("summary"), dict) else None
+        if pf_sum is None:
+            errors.append("preflight.summary must be a dict")
+        elif str(pf.get("overall_outcome")) == "success" and pf_sum.get("error") is not None:
+            errors.append("preflight success requires summary.error null")
+        if iok is True and pf.get("ok") is not True:
+            errors.append("inspection ok requires preflight.ok true")
+
+    if isinstance(pv, dict):
+        for k in ("ok", "overall_outcome", "lines", "summary"):
+            if k not in pv:
+                errors.append(f"preview missing {k}")
+        pv_lines = pv.get("lines")
+        if not isinstance(pv_lines, list):
+            errors.append("preview.lines must be a list")
+        pv_sum = pv.get("summary") if isinstance(pv.get("summary"), dict) else None
+        if pv_sum is None:
+            errors.append("preview.summary must be a dict")
+        elif str(pv.get("overall_outcome")) == "success" and pv_sum.get("error") is not None:
+            errors.append("preview success requires summary.error null")
+        if iok is True and pv.get("ok") is not True:
+            errors.append("inspection ok requires preview.ok true")
+
+    if (
+        iok is True
+        and isinstance(pv_lines, list)
+        and isinstance(sc_raw, int)
+        and not isinstance(sc_raw, bool)
+        and sc_raw == 0
+    ):
+        has_mode_ln = any(isinstance(ln, str) and ln.startswith("Mode:") for ln in pv_lines)
+        has_steps_ln = any(isinstance(ln, str) and ln.startswith("Steps:") for ln in pv_lines)
+        if not has_mode_ln or not has_steps_ln:
+            errors.append("step_count 0 with ok true requires Mode and Steps preview lines")
+
+    if errors:
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": errors}
+    return {"ok": True, "overall_outcome": "success", "message": good, "errors": []}
+
+
+def inspect_team_named_mission_spec_checked(spec: Any) -> Dict[str, Any]:
+    """Inspect one mission spec and validate inspection invariants (no ROS)."""
+    ins = inspect_team_named_mission_spec(spec)
+    val = validate_team_named_mission_inspection(ins if isinstance(ins, dict) else {})
+
+    ins_ok = bool(ins.get("ok")) if isinstance(ins, dict) else False
+    val_ok = bool(val.get("ok"))
+    top_ok = ins_ok and val_ok
+
+    if top_ok:
+        top_oo = "success"
+        top_msg = "Mission spec inspected and validated successfully."
+        top_err = None
+    else:
+        top_oo = "error"
+        top_msg = ""
+        if not val_ok:
+            top_err = str(val.get("message", "")) if val.get("message") else None
+        else:
+            isum = ins.get("summary") if isinstance(ins, dict) and isinstance(ins.get("summary"), dict) else {}
+            e = isum.get("error")
+            top_err = str(e) if e is not None else None
+
+    mode = str(ins.get("mode", "invalid")) if isinstance(ins, dict) else "invalid"
+
+    return {
+        "ok": top_ok,
+        "version": "v1",
+        "mode": mode,
+        "overall_outcome": top_oo,
+        "inspection": ins if isinstance(ins, dict) else {},
+        "validation": val,
+        "summary": {"message": top_msg, "error": top_err},
+    }
+
+
 def inspect_team_named_mission_specs(specs: Any) -> Dict[str, Any]:
     """Offline inspection for several mission specs in order (no ROS)."""
     if not isinstance(specs, list):
         return {
             "ok": False,
+            "version": "v1",
             "overall_outcome": "error",
             "total_specs": 0,
             "ok_count": 0,
@@ -1205,12 +1472,145 @@ def inspect_team_named_mission_specs(specs: Any) -> Dict[str, Any]:
 
     return {
         "ok": all_ok,
+        "version": "v1",
         "overall_outcome": "success" if all_ok else "error",
         "total_specs": n,
         "ok_count": ok_count,
         "error_count": error_count,
         "results": results,
         "summary": {"message": msg, "error": None},
+    }
+
+
+def validate_team_named_mission_specs_inspection(batch_inspection: Any) -> Dict[str, Any]:
+    """Check internal consistency of ``inspect_team_named_mission_specs`` output (pure, no ROS)."""
+    good = "Batch mission inspection is internally consistent."
+    bad = "Batch mission inspection is invalid."
+    if not isinstance(batch_inspection, dict):
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": ["batch_inspection must be a dict"]}
+
+    req_top = ("ok", "overall_outcome", "total_specs", "ok_count", "error_count", "results", "summary")
+    errors: List[str] = []
+    for k in req_top:
+        if k not in batch_inspection:
+            errors.append(f"missing {k}")
+
+    results = batch_inspection.get("results")
+    if not isinstance(results, list):
+        errors.append("results must be a list")
+
+    ts = batch_inspection.get("total_specs")
+    oc = batch_inspection.get("ok_count")
+    ec = batch_inspection.get("error_count")
+    for name, raw in (("total_specs", ts), ("ok_count", oc), ("error_count", ec)):
+        if not isinstance(raw, int) or isinstance(raw, bool):
+            errors.append(f"{name} must be a non-bool int")
+
+    if isinstance(ts, int) and not isinstance(ts, bool) and isinstance(oc, int) and not isinstance(oc, bool):
+        if isinstance(ec, int) and not isinstance(ec, bool) and oc + ec != ts:
+            errors.append("ok_count + error_count must equal total_specs")
+
+    top_ok = batch_inspection.get("ok")
+    boo = batch_inspection.get("overall_outcome")
+    if boo == "success" and top_ok is not True:
+        errors.append("overall_outcome success requires ok true")
+    if top_ok is True and isinstance(ec, int) and not isinstance(ec, bool) and ec != 0:
+        errors.append("ok true requires error_count==0")
+
+    if (
+        isinstance(ts, int)
+        and not isinstance(ts, bool)
+        and isinstance(ec, int)
+        and not isinstance(ec, bool)
+        and ts > 0
+        and ec == 0
+    ):
+        if boo != "success":
+            errors.append("error_count 0 with total_specs>0 requires overall_outcome success")
+        if top_ok is not True:
+            errors.append("error_count 0 with total_specs>0 requires ok true")
+
+    if (
+        isinstance(ec, int)
+        and not isinstance(ec, bool)
+        and ec > 0
+        and boo == "success"
+    ):
+        errors.append("error_count>0 is incompatible with overall_outcome success")
+
+    if isinstance(results, list) and isinstance(ts, int) and not isinstance(ts, bool) and len(results) != ts:
+        errors.append("len(results) must equal total_specs")
+
+    row_keys = ("index", "ok", "mode", "overall_outcome", "step_count", "preflight", "preview", "summary")
+    seen_idx: set[int] = set()
+    if isinstance(results, list):
+        for ri, row in enumerate(results):
+            if not isinstance(row, dict):
+                errors.append(f"results[{ri}] must be a dict")
+                continue
+            for k in row_keys:
+                if k not in row:
+                    errors.append(f"results[{ri}] missing {k}")
+            idx_raw = row.get("index")
+            if not isinstance(idx_raw, int) or isinstance(idx_raw, bool):
+                errors.append(f"results[{ri}].index must be a non-bool int")
+            elif idx_raw in seen_idx:
+                errors.append("result indices must be unique")
+            else:
+                seen_idx.add(idx_raw)
+
+            sc_r = row.get("step_count")
+            if not isinstance(sc_r, int) or isinstance(sc_r, bool):
+                errors.append(f"results[{ri}].step_count must be a non-bool int")
+
+            mode_s = str(row.get("mode", "")).strip().lower()
+            if mode_s not in ("sequence", "parallel", "invalid"):
+                errors.append(f"results[{ri}].mode must be sequence, parallel, or invalid")
+
+            rok = row.get("ok")
+            roo = row.get("overall_outcome")
+            if rok is True and roo != "success":
+                errors.append(f"results[{ri}] ok true requires overall_outcome success")
+
+            for sub, sk in (("preflight", "preflight"), ("preview", "preview"), ("summary", "summary")):
+                if not isinstance(row.get(sub), dict):
+                    errors.append(f"results[{ri}].{sk} must be a dict")
+
+    if errors:
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": errors}
+    return {"ok": True, "overall_outcome": "success", "message": good, "errors": []}
+
+
+def inspect_team_named_mission_specs_checked(specs: Any) -> Dict[str, Any]:
+    """Inspect several mission specs and validate batch inspection invariants (no ROS)."""
+    ins = inspect_team_named_mission_specs(specs)
+    val = validate_team_named_mission_specs_inspection(ins if isinstance(ins, dict) else {})
+
+    ins_ok = bool(ins.get("ok")) if isinstance(ins, dict) else False
+    val_ok = bool(val.get("ok"))
+    top_ok = ins_ok and val_ok
+
+    if top_ok:
+        top_oo = "success"
+        top_msg = "Batch mission specs inspected and validated successfully."
+        top_err = None
+    else:
+        top_oo = "error"
+        top_msg = ""
+        if not val_ok:
+            top_err = str(val.get("message", "")) if val.get("message") else None
+        else:
+            isum = ins.get("summary") if isinstance(ins, dict) and isinstance(ins.get("summary"), dict) else {}
+            e = isum.get("error")
+            top_err = str(e) if e is not None else None
+
+    return {
+        "ok": top_ok,
+        "version": "v1",
+        "overall_outcome": top_oo,
+        "inspection": ins if isinstance(ins, dict) else {},
+        "validation": val,
+        "summary": {"message": top_msg, "error": top_err},
     }
 
 
@@ -1395,6 +1795,7 @@ def summarize_team_named_mission_result(result: Any) -> Dict[str, Any]:
     def _inv() -> Dict[str, Any]:
         return {
             "ok": False,
+            "version": "v1",
             "mode": "invalid",
             "overall_outcome": "error",
             "mission_state": "invalid",
@@ -1441,6 +1842,7 @@ def summarize_team_named_mission_result(result: Any) -> Dict[str, Any]:
                 msg = f"Sequence mission completed with {fc} failed steps."
         return {
             "ok": bool(sq["ok"]),
+            "version": "v1",
             "mode": "sequence",
             "overall_outcome": str(sq["overall_outcome"]),
             "mission_state": ms,
@@ -1513,6 +1915,7 @@ def summarize_team_named_mission_result(result: Any) -> Dict[str, Any]:
 
     return {
         "ok": oo == "success",
+        "version": "v1",
         "mode": "parallel",
         "overall_outcome": str(oo),
         "mission_state": p_ms,
@@ -1568,9 +1971,480 @@ def execute_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
 
     return {
         "ok": top_ok,
+        "version": "v1",
         "mode": mode,
         "overall_outcome": top_oo,
         "run_result": run_compact,
         "execution_summary": ex,
         "summary": {"message": top_msg, "error": top_err},
+    }
+
+
+def execute_team_named_mission_spec_checked(spec: Any) -> Dict[str, Any]:
+    """Run one mission spec, summarize, and validate summary invariants (ROS via ``execute_team_named_mission_spec``)."""
+    exe = execute_team_named_mission_spec(spec)
+    es = exe.get("execution_summary")
+    val = validate_team_named_mission_summary(es if isinstance(es, dict) else {})
+
+    exe_ok = bool(exe.get("ok"))
+    val_ok = bool(val.get("ok"))
+    top_ok = exe_ok and val_ok
+
+    if top_ok:
+        top_oo = "success"
+        top_msg = "Mission spec executed and validated successfully."
+        top_err = None
+    else:
+        top_msg = ""
+        if val.get("overall_outcome") == "error":
+            top_oo = "error"
+        else:
+            top_oo = str(exe.get("overall_outcome", "error"))
+
+        if not val_ok:
+            top_err = str(val.get("message", "")) if val.get("message") else None
+        else:
+            esum = exe.get("summary") if isinstance(exe.get("summary"), dict) else {}
+            if esum.get("error") is not None:
+                top_err = str(esum["error"])
+            else:
+                inner = exe.get("execution_summary") if isinstance(exe.get("execution_summary"), dict) else {}
+                im = inner.get("message")
+                top_err = str(im) if im else None
+
+    return {
+        "ok": top_ok,
+        "version": "v1",
+        "mode": str(exe.get("mode", "invalid")),
+        "overall_outcome": top_oo,
+        "execution": exe,
+        "validation": val,
+        "summary": {"message": top_msg, "error": top_err},
+    }
+
+
+def validate_team_named_mission_execution_contract(result: Any) -> Dict[str, Any]:
+    """Stable v1 shape for single-spec execute / execute_checked / summarize outputs (pure, no ROS)."""
+    bad = "Team mission execution payload v1 contract violation."
+    good = "Team mission execution payload satisfies v1 contract."
+    if not isinstance(result, dict):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "message": bad,
+            "errors": ["result must be a dict"],
+        }
+    if result.get("version") != "v1":
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "message": bad,
+            "errors": ['version must be exactly "v1"'],
+        }
+
+    errors: List[str] = []
+
+    def _req(keys: Tuple[str, ...]) -> None:
+        for k in keys:
+            if k not in result:
+                errors.append(f"missing {k}")
+
+    if "execution" in result and "validation" in result:
+        _req(("ok", "mode", "overall_outcome", "execution", "validation", "summary", "version"))
+        if not isinstance(result.get("execution"), dict):
+            errors.append("execution must be a dict")
+        if not isinstance(result.get("validation"), dict):
+            errors.append("validation must be a dict")
+        if not isinstance(result.get("summary"), dict):
+            errors.append("summary must be a dict")
+    elif "run_result" in result and "execution_summary" in result:
+        _req(("ok", "mode", "overall_outcome", "run_result", "execution_summary", "summary", "version"))
+        if not isinstance(result.get("run_result"), dict):
+            errors.append("run_result must be a dict")
+        if not isinstance(result.get("execution_summary"), dict):
+            errors.append("execution_summary must be a dict")
+        if not isinstance(result.get("summary"), dict):
+            errors.append("summary must be a dict")
+    elif "mission_state" in result and "failed_step_indices" in result:
+        _req(
+            (
+                "ok",
+                "mode",
+                "overall_outcome",
+                "mission_state",
+                "total_steps",
+                "steps_run",
+                "succeeded_count",
+                "failed_count",
+                "stopped_early",
+                "continue_on_failure",
+                "failed_step_indices",
+                "succeeded_step_indices",
+                "first_failed_step_index",
+                "last_step_index_run",
+                "message",
+                "version",
+            )
+        )
+        if not isinstance(result.get("failed_step_indices"), list):
+            errors.append("failed_step_indices must be a list")
+        if not isinstance(result.get("succeeded_step_indices"), list):
+            errors.append("succeeded_step_indices must be a list")
+    else:
+        errors.append("unknown payload shape (expected execute, execute_checked, or summarize_team_named_mission_result)")
+
+    if errors:
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": errors}
+    return {"ok": True, "overall_outcome": "success", "message": good, "errors": []}
+
+
+def validate_team_named_mission_specs_execution_contract(result: Any) -> Dict[str, Any]:
+    """Stable v1 shape for batch execute / execute_checked / batch summarize outputs (pure, no ROS)."""
+    bad = "Batch team mission execution payload v1 contract violation."
+    good = "Batch team mission execution payload satisfies v1 contract."
+    if not isinstance(result, dict):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "message": bad,
+            "errors": ["result must be a dict"],
+        }
+    if result.get("version") != "v1":
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "message": bad,
+            "errors": ['version must be exactly "v1"'],
+        }
+
+    errors: List[str] = []
+
+    def _req(keys: Tuple[str, ...]) -> None:
+        for k in keys:
+            if k not in result:
+                errors.append(f"missing {k}")
+
+    if "execution" in result and "validation" in result:
+        _req(("ok", "overall_outcome", "execution", "validation", "summary", "version"))
+        if not isinstance(result.get("execution"), dict):
+            errors.append("execution must be a dict")
+        if not isinstance(result.get("validation"), dict):
+            errors.append("validation must be a dict")
+        if not isinstance(result.get("summary"), dict):
+            errors.append("summary must be a dict")
+    elif "run_result" in result and "execution_summary" in result:
+        _req(("ok", "overall_outcome", "run_result", "execution_summary", "summary", "version"))
+        if not isinstance(result.get("run_result"), dict):
+            errors.append("run_result must be a dict")
+        if not isinstance(result.get("execution_summary"), dict):
+            errors.append("execution_summary must be a dict")
+        if not isinstance(result.get("summary"), dict):
+            errors.append("summary must be a dict")
+    elif "mission_state" in result and "failed_spec_indices" in result:
+        _req(
+            (
+                "ok",
+                "overall_outcome",
+                "mission_state",
+                "total_specs",
+                "specs_run",
+                "succeeded_count",
+                "failed_count",
+                "stopped_early",
+                "continue_on_batch_failure",
+                "failed_spec_indices",
+                "succeeded_spec_indices",
+                "first_failed_spec_index",
+                "last_spec_index_run",
+                "message",
+                "version",
+            )
+        )
+        if not isinstance(result.get("failed_spec_indices"), list):
+            errors.append("failed_spec_indices must be a list")
+        if not isinstance(result.get("succeeded_spec_indices"), list):
+            errors.append("succeeded_spec_indices must be a list")
+    else:
+        errors.append(
+            "unknown payload shape (expected execute_team_named_mission_specs, execute_checked, or summarize_team_named_mission_specs_result)"
+        )
+
+    if errors:
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": errors}
+    return {"ok": True, "overall_outcome": "success", "message": good, "errors": []}
+
+
+def get_team_named_mission_api_manifest() -> Dict[str, Any]:
+    """Static manifest of stable Layer B mission-spec entrypoints (pure, no ROS)."""
+    return {
+        "ok": True,
+        "overall_outcome": "success",
+        "api_version": "v1",
+        "capabilities": {
+            "single_spec": {
+                "inspect": True,
+                "inspect_checked": True,
+                "execute": True,
+                "execute_checked": True,
+            },
+            "batch_specs": {
+                "inspect": True,
+                "inspect_checked": True,
+                "execute": True,
+                "execute_checked": True,
+            },
+        },
+        "entrypoints": {
+            "single_spec": {
+                "inspect": "inspect_team_named_mission_spec",
+                "inspect_checked": "inspect_team_named_mission_spec_checked",
+                "execute": "execute_team_named_mission_spec",
+                "execute_checked": "execute_team_named_mission_spec_checked",
+            },
+            "batch_specs": {
+                "inspect": "inspect_team_named_mission_specs",
+                "inspect_checked": "inspect_team_named_mission_specs_checked",
+                "execute": "execute_team_named_mission_specs",
+                "execute_checked": "execute_team_named_mission_specs_checked",
+            },
+        },
+        "summary": {
+            "message": "Layer B mission API manifest generated successfully.",
+            "error": None,
+        },
+    }
+
+
+def validate_team_named_mission_api_manifest(manifest: Any) -> Dict[str, Any]:
+    """Check internal consistency of ``get_team_named_mission_api_manifest`` output (pure, no ROS)."""
+    good = "Mission API manifest is internally consistent."
+    bad = "Mission API manifest is invalid."
+    if not isinstance(manifest, dict):
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": ["manifest must be a dict"]}
+
+    req_top = ("ok", "overall_outcome", "api_version", "capabilities", "entrypoints", "summary")
+    errors: List[str] = []
+    for k in req_top:
+        if k not in manifest:
+            errors.append(f"missing {k}")
+
+    if manifest.get("api_version") != "v1":
+        errors.append("api_version must be v1")
+
+    oo = manifest.get("overall_outcome")
+    mok = manifest.get("ok")
+    if oo == "success" and mok is not True:
+        errors.append("overall_outcome success requires ok true")
+
+    sm = manifest.get("summary")
+    if not isinstance(sm, dict):
+        errors.append("summary must be a dict")
+    elif oo == "success" and sm.get("error") is not None:
+        errors.append("success requires summary.error null")
+
+    cap_inner = ("inspect", "inspect_checked", "execute", "execute_checked")
+    cap_groups = ("single_spec", "batch_specs")
+    want_single_ep = {
+        "inspect": "inspect_team_named_mission_spec",
+        "inspect_checked": "inspect_team_named_mission_spec_checked",
+        "execute": "execute_team_named_mission_spec",
+        "execute_checked": "execute_team_named_mission_spec_checked",
+    }
+    want_batch_ep = {
+        "inspect": "inspect_team_named_mission_specs",
+        "inspect_checked": "inspect_team_named_mission_specs_checked",
+        "execute": "execute_team_named_mission_specs",
+        "execute_checked": "execute_team_named_mission_specs_checked",
+    }
+
+    cap = manifest.get("capabilities")
+    if not isinstance(cap, dict):
+        errors.append("capabilities must be a dict")
+    else:
+        for g in cap_groups:
+            if g not in cap:
+                errors.append(f"capabilities missing {g}")
+                continue
+            cg = cap[g]
+            if not isinstance(cg, dict):
+                errors.append(f"capabilities.{g} must be a dict")
+                continue
+            for ck in cap_inner:
+                if ck not in cg:
+                    errors.append(f"capabilities.{g} missing {ck}")
+                elif type(cg[ck]) is not bool:
+                    errors.append(f"capabilities.{g}.{ck} must be bool")
+                elif cg[ck] is not True:
+                    errors.append(f"capabilities.{g}.{ck} must be true")
+
+    ep = manifest.get("entrypoints")
+    if not isinstance(ep, dict):
+        errors.append("entrypoints must be a dict")
+    else:
+        for g, want in (("single_spec", want_single_ep), ("batch_specs", want_batch_ep)):
+            if g not in ep:
+                errors.append(f"entrypoints missing {g}")
+                continue
+            eg = ep[g]
+            if not isinstance(eg, dict):
+                errors.append(f"entrypoints.{g} must be a dict")
+                continue
+            for ck, wval in want.items():
+                if eg.get(ck) != wval:
+                    errors.append(f"entrypoints.{g}.{ck} must be {wval!r}")
+
+    if errors:
+        return {"ok": False, "overall_outcome": "error", "message": bad, "errors": errors}
+    return {"ok": True, "overall_outcome": "success", "message": good, "errors": []}
+
+
+def resolve_team_named_mission_api_entrypoint(scope: str, operation: str) -> Dict[str, Any]:
+    """Resolve manifest-declared entrypoint name for scope and operation (pure, no ROS)."""
+    sc = str(scope).strip()
+    op = str(operation).strip()
+
+    manifest = get_team_named_mission_api_manifest()
+    val = validate_team_named_mission_api_manifest(manifest)
+    if not val.get("ok"):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": sc,
+            "operation": op,
+            "entrypoint": None,
+            "summary": {"message": "", "error": "manifest validation failed"},
+        }
+
+    if sc not in ("single_spec", "batch_specs"):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": sc,
+            "operation": op,
+            "entrypoint": None,
+            "summary": {"message": "", "error": "unsupported scope"},
+        }
+
+    if op not in ("inspect", "inspect_checked", "execute", "execute_checked"):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": sc,
+            "operation": op,
+            "entrypoint": None,
+            "summary": {"message": "", "error": "unsupported operation"},
+        }
+
+    ep = manifest["entrypoints"][sc][op]
+    return {
+        "ok": True,
+        "overall_outcome": "success",
+        "scope": sc,
+        "operation": op,
+        "entrypoint": ep,
+        "summary": {"message": "Mission API entrypoint resolved successfully.", "error": None},
+    }
+
+
+def validate_team_named_mission_api_request(request: Any) -> Dict[str, Any]:
+    """Validate a proposed Layer B mission API call (pure, no ROS)."""
+    manifest = get_team_named_mission_api_manifest()
+    mval = validate_team_named_mission_api_manifest(manifest)
+
+    sc = ""
+    op = ""
+    if isinstance(request, dict):
+        rs = request.get("scope")
+        ro = request.get("operation")
+        sc = "" if rs is None else str(rs).strip()
+        op = "" if ro is None else str(ro).strip()
+
+    if not mval.get("ok"):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": sc,
+            "operation": op,
+            "entrypoint": None,
+            "summary": {"message": "", "error": "manifest validation failed"},
+        }
+
+    if not isinstance(request, dict):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": "",
+            "operation": "",
+            "entrypoint": None,
+            "summary": {"message": "", "error": "request must be a dict"},
+        }
+
+    if sc == "":
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": sc,
+            "operation": op,
+            "entrypoint": None,
+            "summary": {"message": "", "error": "missing scope"},
+        }
+
+    if op == "":
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": sc,
+            "operation": op,
+            "entrypoint": None,
+            "summary": {"message": "", "error": "missing operation"},
+        }
+
+    r = resolve_team_named_mission_api_entrypoint(sc, op)
+    if not r.get("ok"):
+        return r
+
+    return {
+        "ok": True,
+        "overall_outcome": "success",
+        "scope": sc,
+        "operation": op,
+        "entrypoint": r.get("entrypoint"),
+        "summary": {"message": "Mission API request validated successfully.", "error": None},
+    }
+
+
+def plan_team_named_mission_api_call(request: Any) -> Dict[str, Any]:
+    """Convert a validated API request into a compact execution-free plan (pure, no ROS)."""
+    v = validate_team_named_mission_api_request(request)
+    sc = str(v.get("scope", ""))
+    op = str(v.get("operation", ""))
+    vsum = v.get("summary") if isinstance(v.get("summary"), dict) else {}
+    verr = vsum.get("error")
+    err_out = None if verr is None else str(verr)
+
+    if not v.get("ok"):
+        return {
+            "ok": False,
+            "overall_outcome": "error",
+            "scope": sc,
+            "operation": op,
+            "entrypoint": None,
+            "execution_kind": "invalid",
+            "checked": None,
+            "summary": {"message": "", "error": err_out},
+        }
+
+    opn = str(v.get("operation", ""))
+    checked = opn in ("inspect_checked", "execute_checked")
+    execution_kind = "offline" if opn in ("inspect", "inspect_checked") else "live"
+
+    return {
+        "ok": True,
+        "overall_outcome": "success",
+        "scope": sc,
+        "operation": opn,
+        "entrypoint": v.get("entrypoint"),
+        "execution_kind": execution_kind,
+        "checked": checked,
+        "summary": {"message": "Mission API call plan generated successfully.", "error": None},
     }

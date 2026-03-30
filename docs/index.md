@@ -27,6 +27,10 @@ source install/setup.bash
 ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 ```
 
+## 📋 Manager handoff (Layer B checkpoint)
+
+- [Capability snapshot](handoff/capability_snapshot.md) · [Golden-path demo](handoff/golden_path_demo.md) · [Non-goals / deferred](handoff/non_goals_deferred.md) · [Handoff summary](handoff/manager_handoff_summary.md)
+
 ## 📚 Documentation Sections
 
 - [Installation](installation.md)  
