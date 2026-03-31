@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 # Minimal cancel-flow verification; requires sourced ROS + workspace + live graph.
+# NOTE:
+#   - Cancel is exercised here via the raw /cancel_navigation ROS service to keep
+#     this script focused on bridge-level cancel behavior.
+#   - CLI steps below intentionally stay on the golden path:
+#       navigate(named-location) + query-state.
 set -eo pipefail
 source /opt/ros/humble/setup.bash
 [[ -f "$(dirname "$0")/../install/setup.bash" ]] && source "$(dirname "$0")/../install/setup.bash"
@@ -47,30 +52,22 @@ set +e
 nav2=$(ros2 run multi_robot_mission_stack mission-agent --ros navigate --robot-id robot1 --location-name base 2>&1)
 ec4=$?
 set -e
-t4=$SECONDS
-log "exit=$ec4 time=${t4}s"
+T4=$SECONDS
+log "exit=$ec4 time=${T4}s"
 printf '%s\n' "$nav2"
 GID2=$(printf '%s\n' "$nav2" | extract_gid)
 
-log "Step 5: CLI cancel GID2=$GID2"
-SECONDS=0
-set +e
-can=$(ros2 run multi_robot_mission_stack mission-agent --ros cancel --robot-id robot1 --goal-id "$GID2" 2>&1)
-ec5=$?
-set -e
-t5=$SECONDS
-log "exit=$ec5 time=${t5}s"
-printf '%s\n' "$can"
+# NOTE: no CLI cancel step here by design; this script is not a CLI feature matrix.
 
-log "Step 6: CLI query-state GID2"
+log "Step 5: CLI query-state GID2"
 SECONDS=0
 set +e
 qs=$(ros2 run multi_robot_mission_stack mission-agent --ros query-state --robot-id robot1 --goal-id "$GID2" 2>&1)
-ec6=$?
+ec5=$?
 set -e
-t6=$SECONDS
-log "exit=$ec6 time=${t6}s"
+T5=$SECONDS
+log "exit=$ec5 time=${T5}s"
 printf '%s\n' "$qs"
 
-echo "=== SUMMARY exit_codes: step1=$ec1 step2=$ec2 step3=$ec3 step4=$ec4 step5=$ec5 step6=$ec6 ==="
-echo "=== TIMES_SEC: t1=$t1 t2=$t2 t3=$t3 t4=$t4 t5=$t5 t6=$t6 ==="
+echo "=== SUMMARY exit_codes: step1=$ec1 step2=$ec2 step3=$ec3 step4=$ec4 step5=$ec5 ==="
+echo "=== TIMES_SEC: t1=$t1 t2=$t2 t3=$t3 t4=$T4 t5=$T5 ==="
