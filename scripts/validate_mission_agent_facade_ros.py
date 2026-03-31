@@ -33,7 +33,13 @@ from multi_robot_mission_stack.agent import MissionAgentFacade  # noqa: E402
 
 
 def _cmd_failed(out: dict) -> bool:
-    return out.get("status") == "failed"
+    status = str(out.get("status", "") or "").strip().lower()
+    if status in {"failed", "failure"}:
+        return True
+    nav_status = str(out.get("nav_status", "") or "").strip().lower()
+    if nav_status in {"", "unknown", "not_found"}:
+        return True
+    return False
 
 
 def main() -> int:

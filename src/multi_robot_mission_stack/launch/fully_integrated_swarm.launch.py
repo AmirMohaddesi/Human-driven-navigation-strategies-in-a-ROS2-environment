@@ -14,6 +14,7 @@ from launch.actions import (
     IncludeLaunchDescription,
     OpaqueFunction,
     SetEnvironmentVariable,
+    TimerAction,
 )
 from launch.conditions import LaunchConfigurationEquals
 from launch.launch_context import LaunchContext
@@ -395,7 +396,10 @@ def generate_launch_description():
             initial_pose_publisher,
             # static_transform_publisher_1,
             # static_transform_publisher_2,
-            robot_nav,
+            TimerAction(
+                period=2.5,
+                actions=[robot_nav],
+            ),
             # graph_construction_node,
             # start_lifecycle_manager_cmd,
             robot_slam,

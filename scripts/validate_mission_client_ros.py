@@ -48,6 +48,9 @@ def _state_failed(st: dict) -> bool:
         return True
     if st.get("status") == "failure":
         return True
+    nav_status = str(st.get("nav_status", "") or "").strip().lower()
+    if nav_status in {"", "unknown", "not_found"}:
+        return True
     return False
 
 

@@ -141,9 +141,7 @@ Use this as the canonical acceptance path for today's mission-layer baseline:
 
 ```bash
 # 0) mandatory pre-launch cleanup (avoid stale-process contamination)
-pkill -f "ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py" || true
-pkill -f "gzserver|gzclient|rviz2|entity_spawner|lifecycle_manager|controller_server|planner_server|behavior_server|bt_navigator|waypoint_follower|velocity_smoother|map_server|amcl|slam_toolbox|robot_state_publisher|initial_pose_publisher|merge_map_node|mission_bridge_node" || true
-sleep 1
+bash scripts/cleanup_baseline_runtime.sh pre
 
 # 2) rebuild target package only
 source /opt/ros/humble/setup.bash
@@ -171,6 +169,12 @@ python3 scripts/validate_mission_client_ros.py; echo EXIT_CODE:$?
 
 # 7) facade validator
 python3 scripts/validate_mission_agent_facade_ros.py; echo EXIT_CODE:$?
+
+# 8) mandatory post-run teardown cleanup
+bash scripts/cleanup_baseline_runtime.sh post
+
+# 9) optional explicit verification-only check
+bash scripts/cleanup_baseline_runtime.sh verify
 ```
 
 ### Expected success outputs
@@ -187,8 +191,8 @@ python3 scripts/validate_mission_agent_facade_ros.py; echo EXIT_CODE:$?
 
 ### Pass/fail criteria
 
-- **PASS:** both validators return `EXIT_CODE:0`, and both include navigate with non-empty `goal_id` plus non-failure query output.
-- **FAIL:** either validator returns nonzero, or query reports failure semantics (for example `status: "failure"`).
+- **PASS:** both validators return `EXIT_CODE:0`, and both include navigate with non-empty `goal_id` plus query `status` not failed/failure and `nav_status` not `unknown`/`not_found`.
+- **FAIL:** either validator returns nonzero, query reports failure semantics, or query returns unresolved state markers like `nav_status: "unknown"` / `No active goal`.
 
 ### Stale-runtime safeguard (required)
 
