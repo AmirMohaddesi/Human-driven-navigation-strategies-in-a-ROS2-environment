@@ -55,7 +55,7 @@ ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 **Service check** (second terminal, same `source`):
 
 ```bash
-ros2 service list | grep mission_bridge_node
+ros2 service list | grep -E '^/(navigate_to_pose|navigate_to_named_location|get_navigation_state|cancel_navigation)$'
 ```
 
 **CLI examples:**
@@ -91,10 +91,10 @@ Nonzero exit on failure; compact JSON lines on stdout.
 
 With default bridge node name `mission_bridge_node`:
 
-- `/mission_bridge_node/navigate_to_pose`
-- `/mission_bridge_node/navigate_to_named_location`
-- `/mission_bridge_node/get_navigation_state`
-- `/mission_bridge_node/cancel_navigation`
+- `/navigate_to_pose`
+- `/navigate_to_named_location`
+- `/get_navigation_state`
+- `/cancel_navigation`
 
 ---
 
@@ -127,3 +127,73 @@ Other bridge services (e.g. pose navigation, cancel) exist at the ROS layer but 
 - **Mock path:** Python 3 with package dependencies; no `rclpy`.
 - **ROS path:** Built workspace, correct `source`, bridge running with Nav2 for configured robot namespaces; `named_locations.yaml` defines names such as `base` and `test_goal`.
 - **CLI name:** `mission-agent` after install; otherwise `python -m multi_robot_mission_stack.agent.cli`.
+
+---
+
+## I. Locked Golden Path Baseline (Live ROS2)
+
+Use this as the canonical acceptance path for today's mission-layer baseline:
+- named-location navigate
+- query-state
+- live ROS2 bridge path
+
+### Canonical rebuild / relaunch / validate sequence
+
+```bash
+# 0) mandatory pre-launch cleanup (avoid stale-process contamination)
+pkill -f "ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py" || true
+pkill -f "gzserver|gzclient|rviz2|entity_spawner|lifecycle_manager|controller_server|planner_server|behavior_server|bt_navigator|waypoint_follower|velocity_smoother|map_server|amcl|slam_toolbox|robot_state_publisher|initial_pose_publisher|merge_map_node|mission_bridge_node" || true
+sleep 1
+
+# 2) rebuild target package only
+source /opt/ros/humble/setup.bash
+colcon build --packages-select multi_robot_mission_stack
+
+# 3) source overlay
+source install/setup.bash
+
+# 4) launch integrated stack (terminal A)
+ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
+```
+
+If stale processes are not cleared, validation outcomes may be non-reproducible even when mission-layer code is healthy.
+
+In terminal B:
+
+```bash
+source install/setup.bash
+
+# 5) rooted bridge service visibility check
+ros2 service list | grep -E '^/(navigate_to_pose|navigate_to_named_location|get_navigation_state|cancel_navigation)$' || true
+
+# 6) direct client validator
+python3 scripts/validate_mission_client_ros.py; echo EXIT_CODE:$?
+
+# 7) facade validator
+python3 scripts/validate_mission_agent_facade_ros.py; echo EXIT_CODE:$?
+```
+
+### Expected success outputs
+
+`scripts/validate_mission_client_ros.py`:
+- navigate step returns non-empty `goal_id`
+- query step returns non-failure status (typically `status: "success"` and `nav_status: "in_progress"` in immediate checks)
+- `EXIT_CODE:0`
+
+`scripts/validate_mission_agent_facade_ros.py`:
+- navigate step returns non-empty `goal_id`
+- query step returns non-failure status (typically `status: "success"` and `nav_status: "in_progress"` in immediate checks)
+- `EXIT_CODE:0`
+
+### Pass/fail criteria
+
+- **PASS:** both validators return `EXIT_CODE:0`, and both include navigate with non-empty `goal_id` plus non-failure query output.
+- **FAIL:** either validator returns nonzero, or query reports failure semantics (for example `status: "failure"`).
+
+### Stale-runtime safeguard (required)
+
+After any Python bridge logic change, do **rebuild + fresh relaunch** before trusting validation results. Do not trust long-running nodes that started before code changes.
+
+### Known caveat (documented, not solved here)
+
+`gzserver` / simulation instability may appear during integrated launch. This can coexist with a passing mission-layer golden-path validation; treat simulation stability as a separate issue from the bridge/client/facade baseline contract.

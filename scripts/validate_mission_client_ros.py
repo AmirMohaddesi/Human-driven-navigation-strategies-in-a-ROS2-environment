@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Direct smoke test for MissionClient against a running mission bridge.
+Golden-path baseline validator for the direct MissionClient layer.
 
 Prerequisites (Ubuntu / ROS 2):
   - Workspace built and sourced (colcon build + source install/setup.bash)
@@ -8,6 +8,14 @@ Prerequisites (Ubuntu / ROS 2):
 
 Run from workspace root or repo root:
   python3 scripts/validate_mission_client_ros.py
+
+Success contract:
+  - navigate_to_named_location returns a non-empty goal_id
+  - get_navigation_state returns a non-failure / success-like status
+  - process exits with code 0
+
+Stale-runtime safeguard:
+  - after Python bridge changes, rebuild and relaunch before trusting results
 """
 
 from __future__ import annotations

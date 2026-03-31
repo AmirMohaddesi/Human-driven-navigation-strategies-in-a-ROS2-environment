@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smoke test for MissionAgentFacade.with_ros() end-to-end.
+Golden-path baseline validator for the facade layer (MissionAgentFacade.with_ros()).
 
 Prerequisites (Ubuntu / ROS 2):
   - Workspace built and sourced
@@ -8,6 +8,15 @@ Prerequisites (Ubuntu / ROS 2):
 
 Run:
   python3 scripts/validate_mission_agent_facade_ros.py
+
+Baseline expectation:
+  - in a healthy runtime, this should agree with the direct client validator
+  - navigate returns a non-empty goal_id
+  - query returns a non-failure / success-like status
+  - process exits with code 0
+
+Stale-runtime safeguard:
+  - after Python bridge changes, rebuild and relaunch before trusting results
 """
 
 from __future__ import annotations

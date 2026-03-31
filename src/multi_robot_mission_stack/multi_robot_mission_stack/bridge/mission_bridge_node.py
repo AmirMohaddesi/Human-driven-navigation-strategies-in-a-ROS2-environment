@@ -345,6 +345,26 @@ class MissionBridgeNode(Node):
         """
         robot_id = str(robot_id).strip()
         goal_id = str(goal_id).strip()
+        if not robot_id:
+            return {
+                "status": "failure",
+                "message": "robot_id is required",
+                "data": {
+                    "robot_id": robot_id,
+                    "goal_id": goal_id,
+                    "nav_status": "unknown",
+                },
+            }
+        if not goal_id:
+            return {
+                "status": "failure",
+                "message": "goal_id is required",
+                "data": {
+                    "robot_id": robot_id,
+                    "goal_id": goal_id,
+                    "nav_status": "unknown",
+                },
+            }
         if robot_id not in self._robot_namespaces:
             return {
                 "status": "failure",
@@ -357,24 +377,21 @@ class MissionBridgeNode(Node):
             }
 
         key = (robot_id, goal_id)
-        if key not in self._active_goals:
-            return {
-                "status": "failure",
-                "message": "Goal id not found for this robot",
-                "data": {
-                    "robot_id": robot_id,
-                    "goal_id": goal_id,
-                    "nav_status": "unknown",
-                },
-            }
+        tracked = key in self._active_goals
 
         client = self._get_or_create_client(robot_id)
         state = client.get_goal_state()
         nav_status = state.get("nav_status", "unknown")
+        message = state.get("message", "")
+        if not tracked:
+            if message:
+                message = f"{message} (goal not tracked in bridge registry)"
+            else:
+                message = "Goal not tracked in bridge registry; state read from Nav2 client"
 
         return {
             "status": "success",
-            "message": state.get("message", ""),
+            "message": message,
             "data": {
                 "robot_id": robot_id,
                 "goal_id": goal_id,

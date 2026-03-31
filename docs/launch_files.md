@@ -7,6 +7,10 @@ Starts the complete simulation with multiple robots, SLAM, Nav2, and map merging
 ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 ```
 
+**Validation baseline entrypoint:** this is the canonical launch for live mission-layer golden-path validation.
+For acceptance procedure and expected validator outputs, use
+`docs/architecture/mission_system_runbook.md` → **I. Locked Golden Path Baseline (Live ROS2)**.
+
 ## navigation_launch.py
 Brings up the Nav2 stack for a single robot.
 
