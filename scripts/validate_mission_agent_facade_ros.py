@@ -15,6 +15,11 @@ Baseline expectation:
   - query returns a non-failure / success-like status
   - process exits with code 0
 
+Not a Nav2 startup gate:
+  - Same scope as validate_mission_client_ros.py: bridge/facade smoke only.
+  - Per-robot readiness probes: docs/architecture/mission_system_runbook.md §J
+    (not /merged_map or root /map as the gate).
+
 Stale-runtime safeguard:
   - after Python bridge changes, rebuild and relaunch before trusting results
 """

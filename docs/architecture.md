@@ -17,5 +17,5 @@ multi-robot SLAM, navigation, and map merging.
 [ Gazebo World ] --> [ Robot State Publishers ] --> [ SLAM Nodes ] --> [ Nav2 ]
                                              \--> [ YOLO Detection ]
 
-[ SLAM Nodes ] --> [ Map Merge Node ] --> [ Global Map Topic ]
+[ SLAM Nodes ] --> [ Map Merge Node ] --> [ /merged_map (auxiliary) ]
 ```

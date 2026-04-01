@@ -14,6 +14,12 @@ Success contract:
   - get_navigation_state returns a non-failure / success-like status
   - process exits with code 0
 
+Not a Nav2 startup gate:
+  - This script does not check namespaced /map, lifecycles, or map->odom TF.
+  - Per-robot readiness for fully_integrated_swarm (map_server, SLAM map->odom, etc.) is
+    documented in docs/architecture/mission_system_runbook.md §J. Do not use /merged_map or
+    root /map as the per-robot navigation readiness signal.
+
 Stale-runtime safeguard:
   - after Python bridge changes, rebuild and relaunch before trusting results
 """

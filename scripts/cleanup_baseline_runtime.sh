@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Cleanup helper for locked golden-path baseline runs.
 # Use before launch attempts and after validation teardown.
+#
+# The process pattern includes slam_toolbox, merge_map_node, map_server, etc., so a dirty
+# fully_integrated_swarm is fully torn down. That does not imply merge_map or /merged_map
+# are navigation readiness gates—see docs/architecture/mission_system_runbook.md §J.
 
 set -euo pipefail
 

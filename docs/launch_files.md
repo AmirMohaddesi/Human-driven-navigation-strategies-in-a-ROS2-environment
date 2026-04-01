@@ -11,6 +11,8 @@ ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
 For acceptance procedure and expected validator outputs, use
 `docs/architecture/mission_system_runbook.md` → **I. Locked Golden Path Baseline (Live ROS2)**.
 
+**Navigation readiness:** per-robot Nav2 depends on **namespaced** map/localization/TF (**`/{robot}_ns/map`**, SLAM for **`map`→`odom`**); **`/merged_map`** from merge is **not** that gate—see the same runbook → **§J**.
+
 ## navigation_launch.py
 Brings up the Nav2 stack for a single robot.
 
