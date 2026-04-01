@@ -58,12 +58,22 @@ def create_facade_from_args(args: argparse.Namespace) -> MissionAgentFacade:
     raise RuntimeError("internal error: neither --mock nor --ros (parser should prevent this)")
 
 
+# Process exit mapping (single choke point). Policy: docs/architecture/mission_control_cli_policy.md
+# JSON is the primary contract; exit code is a secondary automation signal.
+# Contract-valid JSON is not the same as a successful operation: e.g. status "failure"
+# with nav_status wrong_robot / not_found is valid, structured output but exit must be nonzero.
+_ZERO_EXIT_STATUSES = frozenset({"accepted", "success", "in_progress"})
+
+
 def _exit_code_from_result(result: Dict[str, Any]) -> int:
+    """Map facade result dict to shell exit code.
+
+    * ``status`` in ``_ZERO_EXIT_STATUSES`` -> 0 (success-shaped JSON for CLI defaults).
+    * ``failure``, ``failed``, or any other status -> 1 (operational or transport failure;
+      parse JSON for wrong_robot vs not_found vs MissionClient ``failed``).
+    """
     status = result.get("status")
-    if status == "failed":
-        return 1
-    # Bridge + MissionClient return in_progress when Nav2 accepted the goal async.
-    if status in ("accepted", "success", "in_progress"):
+    if status in _ZERO_EXIT_STATUSES:
         return 0
     return 1
 
