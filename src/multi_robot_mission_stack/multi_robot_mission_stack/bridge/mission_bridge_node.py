@@ -50,6 +50,9 @@ class MissionBridgeNode(Node):
         # Track active goals: (robot_id, goal_id) -> metadata
         self._active_goals: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
+        # goal_id -> robot_id (derived on register; cancel path ownership lookup)
+        self._goal_id_owner: Dict[str, str] = {}
+
         # Named locations loaded from config (location_name -> {x, y, yaw})
         self._named_locations: Dict[str, Dict[str, float]] = {}
         self._load_named_locations()
@@ -303,6 +306,7 @@ class MissionBridgeNode(Node):
                 "namespace": namespace,
                 "target_pose": {"x": x, "y": y, "yaw": yaw},
             }
+            self._goal_id_owner[goal_id] = robot_id
         else:
             nav_status = "rejected"
 
@@ -399,6 +403,25 @@ class MissionBridgeNode(Node):
             },
         }
 
+    def _classify_cancel_target(self, robot_id: str, goal_id: str) -> str:
+        """
+        Cancel-path ownership classification (V2.0.1).
+
+        Preconditions: robot_id is a configured mission id (in _robot_namespaces).
+
+        Returns one of:
+            owned_active — (robot_id, goal_id) is in _active_goals
+            wrong_robot — goal_id is registered to another robot_id
+            unknown_goal — no active pair and not wrong_robot
+        """
+        key = (robot_id, goal_id)
+        if key in self._active_goals:
+            return "owned_active"
+        owner = self._goal_id_owner.get(goal_id)
+        if owner is not None and owner != robot_id:
+            return "wrong_robot"
+        return "unknown_goal"
+
     def cancel_navigation(self, robot_id: str, goal_id: str) -> Dict[str, Any]:
         """
         Request cancellation of a goal created by this bridge.
@@ -416,8 +439,18 @@ class MissionBridgeNode(Node):
                 },
             }
 
-        key = (robot_id, goal_id)
-        if key not in self._active_goals:
+        classification = self._classify_cancel_target(robot_id, goal_id)
+        if classification == "wrong_robot":
+            return {
+                "status": "failure",
+                "message": "Goal id belongs to another robot",
+                "data": {
+                    "robot_id": robot_id,
+                    "goal_id": goal_id,
+                    "nav_status": "wrong_robot",
+                },
+            }
+        if classification == "unknown_goal":
             return {
                 "status": "failure",
                 "message": "Goal id not found for this robot",
