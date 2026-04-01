@@ -67,6 +67,8 @@ mission-agent --ros query-state --robot-id robot1 --goal-id "<goal_id>"
 
 Use the `goal_id` printed by a successful navigate (JSON field `goal_id`).
 
+**CLI JSON vs shell exit:** see [mission_control_cli_policy.md](mission_control_cli_policy.md).
+
 ---
 
 ## E. Direct validation scripts
@@ -79,6 +81,14 @@ bash scripts/check_robot_readiness.sh robot1_ns; echo READINESS_EXIT:$?
 
 python3 scripts/validate_mission_client_ros.py
 python3 scripts/validate_mission_agent_facade_ros.py
+python3 scripts/validate_mission_agent_facade_cancel_ros.py
+bash scripts/validate_mission_cli_cancel_ros.sh
+python3 scripts/validate_mission_cancel_invalid_goal_ros.py
+python3 scripts/validate_mission_agent_facade_cancel_invalid_goal_ros.py
+bash scripts/validate_mission_cli_cancel_invalid_goal_ros.sh
+python3 scripts/validate_coordinator_ownership_cancel_ros.py
+bash scripts/validate_mission_cli_ownership_cancel_ros.sh
+python3 scripts/validate_mission_client_ownership_cancel_ros.py
 ```
 
 | Script | Validates |
@@ -86,8 +96,17 @@ python3 scripts/validate_mission_agent_facade_ros.py
 | `check_robot_readiness.sh` | **Operator readiness** (not mission validation): lifecycles `map_server` / `amcl` / `bt_navigator`, **`/{ns}/map`**, **`/{ns}/tf`** publishers, **`amcl` `tf_broadcast`**, **`slam_toolbox`** on `/tf`. Exits `0` ready, `1` not ready, `2` partial, `3` no `ros2`. |
 | `validate_mission_client_ros.py` | `MissionClient`: `navigate_to_named_location` → `get_navigation_state` |
 | `validate_mission_agent_facade_ros.py` | `MissionAgentFacade.with_ros()` with external navigate + query commands |
+| `validate_mission_agent_facade_cancel_ros.py` | `MissionAgentFacade.with_ros()`: navigate → cancel → query-after-cancel |
+| `validate_mission_cancel_ros.py` | `MissionClient`: same cancel flow (direct bridge client) |
+| `validate_mission_cli_cancel_ros.sh` / `.py` | **`mission-agent --ros`**: navigate → cancel → query-state (user-facing CLI) |
+| `validate_mission_cancel_invalid_goal_ros.py` | `MissionClient`: cancel with unknown `goal_id` (invalid-goal contract, **§K**) |
+| `validate_mission_agent_facade_cancel_invalid_goal_ros.py` | Facade ROS path: same invalid-goal cancel contract (**§K**) |
+| `validate_mission_cli_cancel_invalid_goal_ros.sh` / `.py` | CLI: same invalid-goal cancel contract (**§K**) |
+| `validate_coordinator_ownership_cancel_ros.py` | V2.1 **ownership-safe cancel** (live): navigate **robot1** → cancel **robot2** with robot1 `goal_id` → **wrong_robot** → cancel **robot1** → success cancel contract; see [mission_control_v2_1_orchestration_prep.md](mission_control_v2_1_orchestration_prep.md) |
+| `validate_mission_cli_ownership_cancel_ros.sh` / `.py` | CLI: same V2.1 **ownership-safe cancel** flow as coordinator validator (**§K** / V2.0.1 contracts) |
+| `validate_mission_client_ownership_cancel_ros.py` | `MissionClient`: same V2.1 **ownership-safe cancel** flow (direct bridge client) |
 
-Nonzero exit on failure; compact JSON lines on stdout.
+Nonzero exit on failure; compact JSON lines on stdout. **§K** freezes the navigation-control-plane JSON semantics these scripts exercise (happy path + invalid-goal cancel).
 
 **Readiness scope:** `check_robot_readiness.sh` encodes the **§J** startup contract in one command. The Python validators are **mission-layer / bridge smoke tests** (goal acceptance + query semantics) and do **not** replace that probe. For rationale and manual fallbacks, see **§J** below.
 
@@ -123,8 +142,9 @@ Through the **facade and graph**, the supported **external** operations are:
 
 1. **Navigate to named location** — `mission-agent … navigate --robot-id … --location-name …`
 2. **Query navigation state** — `mission-agent … query-state --robot-id … --goal-id …`
+3. **Cancel navigation** — `mission-agent … cancel --robot-id … --goal-id …`
 
-Other bridge services (e.g. pose navigation, cancel) exist at the ROS layer but are **not** exposed by this CLI or graph in the current release.
+**Live check (facade cancel path):** `python3 scripts/validate_mission_agent_facade_cancel_ros.py` (after the same ROS prerequisites as other validators). Additional shapes (e.g. navigate-to-pose) exist via structured commands and bridge services (§F); they are not all listed here.
 
 ---
 
@@ -301,3 +321,57 @@ Use **`robot1_ns`** (or the failing robot’s namespace) and the same shell wher
 | `amcl.tf_broadcast` is false at runtime | Yes (param file + `ros2 param get`) | — |
 | Which publisher emits each transform pair | — | `topic info` does not label edges; **`map`→`odom` attributed to `slam_toolbox`** given AMCL tf_broadcast off + SLAM localization config |
 | AMCL’s `/tf` publisher when `tf_broadcast` is false | — | Treat as Nav2 implementation detail; verify against Nav2 release notes if behavior surprises |
+
+---
+
+## K. Navigation control plane contract (Mission Control v1.1)
+
+**Authoritative for:** live ROS navigation commands against the mission bridge—**named-location navigate**, **query navigation state**, **cancel navigation**—for **one robot at a time** in the configuration the validators use (e.g. `robot1` / `robot1_ns`). This is the **current mission slice** only: it does **not** define multi-robot coordination, new mission types, or LangGraph behavior beyond what reaches these bridge services.
+
+### Validated surfaces
+
+The following surfaces are **live-validated** against the integrated stack (see **§E** for script names):
+
+| Surface | Mechanism |
+|---------|-----------|
+| **MissionClient** | Direct ROS service calls to the bridge (`navigate_to_named_location`, `get_navigation_state`, `cancel_navigation`). |
+| **MissionAgentFacade** | `MissionAgentFacade.with_ros()` handling structured navigate / query / cancel commands (same bridge underneath). |
+| **`mission-agent` CLI** | `mission-agent --ros …` or `python -m multi_robot_mission_stack.agent.cli --ros …` (real operator entrypoint). |
+
+### Happy-path contract (validated)
+
+Operators and integrators may assume the following **when the stack is healthy** (readiness: **§J**, cleanup: **§I**):
+
+1. **Navigate → query**  
+   After a successful navigate to a named location, the returned `goal_id` can be used with query-state; validators expect a **non-failure** outcome with a **resolved** navigation state (not `unknown` / `not_found` for that active goal in the immediate check).
+
+2. **Navigate → cancel → query-after-cancel**  
+   **Success at a high level** (as encoded in **§E** cancel scripts): navigate yields a non-empty `goal_id` with non-failure navigate semantics; cancel returns non-failure `status` with `nav_status` in **`cancelling`** or **`not_cancellable`**; the immediate follow-up query returns `status: success` with a **non-empty** `nav_status` that is **not** `unknown` or `not_found`.
+
+### Invalid-goal cancel contract (validated)
+
+For **cancel** with a `goal_id` that the bridge has **no record of** for that robot (validators use a bogus id such as `bogus-goal-id-for-validator`), the JSON response **must** match:
+
+| Field | Value |
+|-------|--------|
+| `status` | `"failure"` |
+| `nav_status` | `"not_found"` |
+| `message` | `Goal id not found for this robot` |
+
+This contract is asserted on **MissionClient**, **facade**, and **CLI** paths in **§E**.
+
+### Semantic notes (not bugs for v1.1)
+
+- **Cancel “success”** (request accepted) may appear as `nav_status` **`cancelling`** or **`not_cancellable`** depending on Nav2 / timing; both are treated as successful cancel initiation in the cancel validators.
+- **Query-after-cancel** may still reflect an **in-flight** or **terminal** Nav2-derived state briefly; integrators should not assume an immediate “blank” world state.
+- **CLI process exit code:** authoritative policy is [mission_control_cli_policy.md](mission_control_cli_policy.md). **JSON** remains authoritative for semantics (e.g. **wrong_robot** vs **not_found**); exit code is a **secondary** automation signal per that policy.
+- **Wrong-robot cancel** and **terminal-goal** cancel/query behavior are **not** frozen by the current validator set unless separately validated later.
+
+### Explicitly out of scope (this section does not freeze)
+
+- Multi-robot orchestration and cross-robot goal ownership.
+- Broader mission types, mission graphs, or policies beyond this navigate/query/cancel slice.
+- Registry or active-goal store redesign.
+- CLI exit semantics are governed by [mission_control_cli_policy.md](mission_control_cli_policy.md) (not ad hoc runbook edits).
+- Wrong-robot and terminal-goal edge cases until covered by dedicated validation.
+- LangGraph scope expansion or launch/runtime redesign.

@@ -2,6 +2,7 @@
 
 from .coordinator import (
     assign_named_navigation,
+    cancel_navigation_via_facade,
     get_team_named_mission_api_manifest,
     assign_named_parallel,
     assign_named_sequence,
@@ -40,6 +41,7 @@ from .coordinator import (
 
 __all__ = [
     "assign_named_navigation",
+    "cancel_navigation_via_facade",
     "get_team_named_mission_api_manifest",
     "assign_named_parallel",
     "assign_named_sequence",

@@ -11,6 +11,26 @@ from ..agent.sequence_utils import _navigate_named_command, _navigate_ok, _valid
 from ..agent.wait_utils import wait_for_terminal_navigation_state
 
 
+def cancel_navigation_via_facade(
+    facade: MissionAgentFacade,
+    robot_id: str,
+    goal_id: str,
+) -> Dict[str, Any]:
+    """
+    Forward cancel through ``facade.handle_command`` only.
+
+    No coordinator registry; bridge remains ownership authority. Returns the raw
+    result dict (e.g. wrong_robot vs owned cancel) without reinterpretation.
+    """
+    cmd = {
+        "type": "cancel",
+        "target": "navigation",
+        "robot_id": str(robot_id).strip(),
+        "goal_id": str(goal_id).strip(),
+    }
+    return facade.handle_command(cmd)
+
+
 def assign_named_navigation(
     robot_id: str,
     location_name: str,
