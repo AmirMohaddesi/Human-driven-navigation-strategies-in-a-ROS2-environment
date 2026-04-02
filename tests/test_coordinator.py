@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from multi_robot_mission_stack.coordinator import (
     assign_named_navigation,
+    cancel_navigation_via_facade,
     get_team_named_mission_api_manifest,
     assign_named_parallel,
     assign_named_sequence,
@@ -209,6 +210,41 @@ def test_plan_team_named_mission_api_call_missing_operation_checked_null() -> No
     assert out["ok"] is False
     assert out["checked"] is None
     assert out["summary"]["error"] == "missing operation"
+
+
+def test_cancel_navigation_via_facade_calls_handle_command_with_cancel_navigation_shape() -> None:
+    facade = MagicMock()
+    raw: Dict[str, Any] = {
+        "status": "failure",
+        "nav_status": "wrong_robot",
+        "message": "Goal id belongs to another robot",
+    }
+    facade.handle_command.return_value = raw
+
+    out = cancel_navigation_via_facade(facade, "robot2", "goal-from-robot1")
+
+    facade.handle_command.assert_called_once()
+    cmd = facade.handle_command.call_args[0][0]
+    assert cmd == {
+        "type": "cancel",
+        "target": "navigation",
+        "robot_id": "robot2",
+        "goal_id": "goal-from-robot1",
+    }
+    assert out is raw
+
+
+def test_cancel_navigation_via_facade_strips_robot_id_and_goal_id() -> None:
+    facade = MagicMock()
+    ret = {"status": "accepted", "nav_status": "cancelling"}
+    facade.handle_command.return_value = ret
+
+    out = cancel_navigation_via_facade(facade, "  robot1  ", "  gid-7  ")
+
+    cmd = facade.handle_command.call_args[0][0]
+    assert cmd["robot_id"] == "robot1"
+    assert cmd["goal_id"] == "gid-7"
+    assert out is ret
 
 
 def test_assign_succeeded() -> None:

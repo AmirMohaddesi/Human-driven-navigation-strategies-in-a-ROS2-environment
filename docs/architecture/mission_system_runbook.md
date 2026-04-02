@@ -90,6 +90,7 @@ bash scripts/validate_mission_cli_cancel_invalid_goal_ros.sh
 python3 scripts/validate_coordinator_ownership_cancel_ros.py
 bash scripts/validate_mission_cli_ownership_cancel_ros.sh
 python3 scripts/validate_mission_client_ownership_cancel_ros.py
+python3 scripts/validate_coordinator_parallel_ownership_smoke_ros.py
 ```
 
 | Script | Validates |
@@ -107,6 +108,9 @@ python3 scripts/validate_mission_client_ownership_cancel_ros.py
 | `validate_coordinator_ownership_cancel_ros.py` | V2.1 **ownership-safe cancel** (live): navigate **robot1** → cancel **robot2** with robot1 `goal_id` → **wrong_robot** → cancel **robot1** → success cancel contract; see [mission_control_v2_1_orchestration_prep.md](mission_control_v2_1_orchestration_prep.md) |
 | `validate_mission_cli_ownership_cancel_ros.sh` / `.py` | CLI: same V2.1 **ownership-safe cancel** flow as coordinator validator (**§K** / V2.0.1 contracts) |
 | `validate_mission_client_ownership_cancel_ros.py` | `MissionClient`: same V2.1 **ownership-safe cancel** flow (direct bridge client) |
+| `validate_coordinator_parallel_ownership_smoke_ros.py` | V2.1 **two-robot smoke** (**long-budget / optional**): sequential navigate **robot1** then **robot2** (no terminal wait) → **wrong_robot** cancel → owner cancel (**§K** / V2.0.1); see [mission_control_v2_1_orchestration_prep.md](mission_control_v2_1_orchestration_prep.md) |
+
+**V2.1 — fast vs heavy:** Default deterministic Layer B cancel plumbing: `pytest tests/test_coordinator.py -k cancel_navigation_via_facade` (no ROS). The parallel smoke row above is **release/nightly-style** confidence (dual readiness often slow); **readiness timeout = environment not ready**, not “validator failed” — see **Fast deterministic checks vs heavy parallel smoke** in [mission_control_v2_1_orchestration_prep.md](mission_control_v2_1_orchestration_prep.md).
 
 Nonzero exit on failure; compact JSON lines on stdout. **§K** freezes the navigation-control-plane JSON semantics these scripts exercise (happy path + invalid-goal cancel).
 
