@@ -6,6 +6,8 @@ Define the **smallest** increment beyond today’s validated **single-robot cont
 
 This note is **planning only**—no implementation obligation until approved. It does **not** redesign launch/runtime, broaden LangGraph, or add new mission contract types.
 
+**Checkpoint:** The V2.1 orchestration-prep slice is **closed** for current scope (evidence, out-of-scope boundaries, handoff): [mission_control_v2_1_checkpoint.md](mission_control_v2_1_checkpoint.md).
+
 ---
 
 ## Current baseline carried forward
@@ -75,13 +77,23 @@ This produces **visible multi-robot progress** (explicit cross-robot mistake + r
 
 **Implemented:** `scripts/validate_coordinator_ownership_cancel_ros.py` — live ROS against the integrated stack. Sequence: navigate **robot1** (named location **base**) → cancel **robot2** with **robot1**’s `goal_id` → **`wrong_robot`** contract → cancel **robot1** with the same `goal_id` → **success-shaped** cancel (`nav_status` **`cancelling`** or **`not_cancellable`**). Cancel steps use **`cancel_navigation_with_ros`** (Layer B; internally **`cancel_navigation_via_facade`**); navigate and optional **query-state** use one **`MissionAgentFacade.with_ros()`** session for submit + observe. Optional trailing **query-state** is log-only. **CLI parity:** `scripts/validate_mission_cli_ownership_cancel_ros.py` (and **`.sh`**) exercises the same sequence via **`mission-agent --ros`**.
 
+### Fast deterministic checks vs heavy parallel smoke
+
+| Tier | What | When to use |
+|------|------|-------------|
+| **Default / local regression** | **`pytest tests/test_coordinator.py -k cancel_navigation_via_facade`** — unit tests **`test_cancel_navigation_via_facade_*`** lock Layer B **`cancel_navigation_via_facade`**: single **`handle_command`** cancel shape, return dict passed through unchanged, **no** orchestration-side ownership remapping. **No ROS / Gazebo.** | Every change touching coordinator cancel plumbing; CI-friendly. |
+| **Release / nightly / long-budget (optional)** | **`scripts/validate_coordinator_parallel_ownership_smoke_ros.py`** — two navigates submitted without terminal wait, then **wrong_robot** + owner cancel via **MissionClient**. Needs **`fully_integrated_swarm`** (or equivalent) and **both** namespaces passing §J-style readiness; bring-up often needs **many minutes**. | Extra confidence before a release or on a scheduled job with a **generous readiness budget**. |
+
+If the stack **does not** become ready in time (or the script is **skipped** because of a short readiness window), classify that as **environment not ready** — **not** as “the parallel smoke validator failed” and **not** as proof that **`cancel_navigation_via_facade`** or bridge cancel semantics are wrong.
+
 ---
 
 ## Validation plan
 
-- **Live ROS** (same discipline as v1.1 / V2.0.1): `cleanup_baseline_runtime.sh pre` → build if needed → `fully_integrated_swarm` (or agreed canonical launch) → new script → `post` → `verify`.
+- **Fast / default:** `pytest tests/test_coordinator.py -k cancel_navigation_via_facade` (see **Fast deterministic checks vs heavy parallel smoke** above).
+- **Live ROS** (same discipline as v1.1 / V2.0.1): `cleanup_baseline_runtime.sh pre` → build if needed → `fully_integrated_swarm` (or agreed canonical launch) → script → `post` → `verify`.
 - **Regression**: run existing **wrong_robot** client/facade/CLI validators and a **minimal** coordinator execute smoke if already part of CI/local habit—**no** broad script rewrites.
-- **Offline**: optional unit test for pure **Python** helper that only forwards dicts (if added).
+- **Offline coordinator cancel plumbing:** covered by **`test_cancel_navigation_via_facade_*`** in **`tests/test_coordinator.py`** (forward-only; no bridge changes).
 
 ---
 
