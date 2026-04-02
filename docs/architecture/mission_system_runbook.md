@@ -84,6 +84,7 @@ python3 scripts/validate_mission_agent_facade_ros.py
 python3 scripts/validate_mission_agent_facade_cancel_ros.py
 bash scripts/validate_mission_cli_cancel_ros.sh
 python3 scripts/validate_mission_cancel_invalid_goal_ros.py
+python3 scripts/validate_mission_cancel_terminal_goal_ros.py
 python3 scripts/validate_mission_agent_facade_cancel_invalid_goal_ros.py
 bash scripts/validate_mission_cli_cancel_invalid_goal_ros.sh
 python3 scripts/validate_coordinator_ownership_cancel_ros.py
@@ -100,6 +101,7 @@ python3 scripts/validate_mission_client_ownership_cancel_ros.py
 | `validate_mission_cancel_ros.py` | `MissionClient`: same cancel flow (direct bridge client) |
 | `validate_mission_cli_cancel_ros.sh` / `.py` | **`mission-agent --ros`**: navigate → cancel → query-state (user-facing CLI) |
 | `validate_mission_cancel_invalid_goal_ros.py` | `MissionClient`: cancel with unknown `goal_id` (invalid-goal contract, **§K**) |
+| `validate_mission_cancel_terminal_goal_ros.py` | `MissionClient`: **V2.0.2** terminal-goal cancel — navigate → wait until terminal → cancel → `success` / `not_cancellable` / `Goal is already complete` ([mission_control_v2_0_2_terminal_query_semantics.md](mission_control_v2_0_2_terminal_query_semantics.md)) |
 | `validate_mission_agent_facade_cancel_invalid_goal_ros.py` | Facade ROS path: same invalid-goal cancel contract (**§K**) |
 | `validate_mission_cli_cancel_invalid_goal_ros.sh` / `.py` | CLI: same invalid-goal cancel contract (**§K**) |
 | `validate_coordinator_ownership_cancel_ros.py` | V2.1 **ownership-safe cancel** (live): navigate **robot1** → cancel **robot2** with robot1 `goal_id` → **wrong_robot** → cancel **robot1** → success cancel contract; see [mission_control_v2_1_orchestration_prep.md](mission_control_v2_1_orchestration_prep.md) |
@@ -365,7 +367,7 @@ This contract is asserted on **MissionClient**, **facade**, and **CLI** paths in
 - **Cancel “success”** (request accepted) may appear as `nav_status` **`cancelling`** or **`not_cancellable`** depending on Nav2 / timing; both are treated as successful cancel initiation in the cancel validators.
 - **Query-after-cancel** may still reflect an **in-flight** or **terminal** Nav2-derived state briefly; integrators should not assume an immediate “blank” world state.
 - **CLI process exit code:** authoritative policy is [mission_control_cli_policy.md](mission_control_cli_policy.md). **JSON** remains authoritative for semantics (e.g. **wrong_robot** vs **not_found**); exit code is a **secondary** automation signal per that policy.
-- **Wrong-robot cancel** and **terminal-goal** cancel/query behavior are **not** frozen by the current validator set unless separately validated later.
+- **Wrong-robot cancel** is live-validated (**§E** ownership scripts, V2.0.1). **Terminal-goal cancel (V2.0.2, MissionClient only):** after Nav2 reports a terminal `nav_status` for the goal, `cancel_navigation` returns `status: success`, `nav_status: not_cancellable`, `message: Goal is already complete` — see `validate_mission_cancel_terminal_goal_ros.py` and [mission_control_v2_0_2_terminal_query_semantics.md](mission_control_v2_0_2_terminal_query_semantics.md). **Query semantics** for untracked / wrong-robot / terminal edge cases remain **not** frozen here unless separately validated.
 
 ### Explicitly out of scope (this section does not freeze)
 
@@ -373,5 +375,5 @@ This contract is asserted on **MissionClient**, **facade**, and **CLI** paths in
 - Broader mission types, mission graphs, or policies beyond this navigate/query/cancel slice.
 - Registry or active-goal store redesign.
 - CLI exit semantics are governed by [mission_control_cli_policy.md](mission_control_cli_policy.md) (not ad hoc runbook edits).
-- Wrong-robot and terminal-goal edge cases until covered by dedicated validation.
+- Wrong-robot **query** and broader query-matrix edge cases until covered by dedicated validation (terminal-goal **cancel** on MissionClient is covered by **§E** / V2.0.2 note above).
 - LangGraph scope expansion or launch/runtime redesign.

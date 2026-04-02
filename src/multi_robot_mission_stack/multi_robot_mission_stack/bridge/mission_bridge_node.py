@@ -462,6 +462,20 @@ class MissionBridgeNode(Node):
             }
 
         client = self._get_or_create_client(robot_id)
+        # V2.0.2: tracked goal already terminal in Nav2 — do not send cancel_goal_async.
+        pre_state = client.get_goal_state()
+        pre_nav = str(pre_state.get("nav_status", "unknown")).strip().lower()
+        if pre_nav in ("succeeded", "cancelled", "failed"):
+            return {
+                "status": "success",
+                "message": "Goal is already complete",
+                "data": {
+                    "robot_id": robot_id,
+                    "goal_id": goal_id,
+                    "nav_status": "not_cancellable",
+                },
+            }
+
         cancel_result = client.cancel_active_goal()
         nav_status = cancel_result.get("nav_status", "unknown")
 
