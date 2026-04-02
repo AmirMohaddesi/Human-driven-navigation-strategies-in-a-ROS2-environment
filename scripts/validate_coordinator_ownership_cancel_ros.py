@@ -2,8 +2,9 @@
 """
 Live ROS validator: ownership-safe cancel flow (V2.1 coordinator-prep slice).
 
-Navigate via ``MissionAgentFacade``; cancel steps via ``cancel_navigation_via_facade``
-(coordinator forwarder, no shadow registry). Bridge remains ownership authority.
+Navigate via ``MissionAgentFacade`` (same command shape as ``assign_named_navigation``).
+Cancel steps via Layer B ``cancel_navigation_with_ros`` (delegates to
+``cancel_navigation_via_facade`` per session). Bridge remains ownership authority.
 
 Prerequisites:
   - source install/setup.bash
@@ -30,7 +31,8 @@ if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
 from multi_robot_mission_stack.agent import MissionAgentFacade  # noqa: E402
-from multi_robot_mission_stack.coordinator import cancel_navigation_via_facade  # noqa: E402
+from multi_robot_mission_stack.agent.sequence_utils import _navigate_named_command  # noqa: E402
+from multi_robot_mission_stack.coordinator import cancel_navigation_with_ros  # noqa: E402
 
 OWNER_ROBOT = "robot1"
 OTHER_ROBOT = "robot2"
@@ -76,15 +78,12 @@ def main() -> int:
     try:
         facade = MissionAgentFacade.with_ros()
 
-        nav_cmd = {
-            "type": "navigate",
-            "target": "named_location",
-            "robot_id": OWNER_ROBOT,
-            "location_name": LOCATION,
-        }
-        nav = facade.handle_command(nav_cmd)
+        nav = facade.handle_command(_navigate_named_command(OWNER_ROBOT, LOCATION))
         print(
-            json.dumps({"step": "handle_command_navigate", "result": nav}, separators=(",", ":")),
+            json.dumps(
+                {"step": "navigate_named_location_facade_session", "result": nav},
+                separators=(",", ":"),
+            ),
             flush=True,
         )
         if _navigate_failed(nav):
@@ -92,10 +91,10 @@ def main() -> int:
 
         gid = str(nav["goal_id"]).strip()
 
-        out_wrong = cancel_navigation_via_facade(facade, OTHER_ROBOT, gid)
+        out_wrong = cancel_navigation_with_ros(OTHER_ROBOT, gid)
         print(
             json.dumps(
-                {"step": "coordinator_cancel_navigation_wrong_robot", "result": out_wrong},
+                {"step": "cancel_navigation_with_ros_wrong_robot", "result": out_wrong},
                 separators=(",", ":"),
             ),
             flush=True,
@@ -103,10 +102,10 @@ def main() -> int:
         if not _matches_wrong_robot_contract(out_wrong):
             return 1
 
-        out_ok = cancel_navigation_via_facade(facade, OWNER_ROBOT, gid)
+        out_ok = cancel_navigation_with_ros(OWNER_ROBOT, gid)
         print(
             json.dumps(
-                {"step": "coordinator_cancel_navigation_owner", "result": out_ok},
+                {"step": "cancel_navigation_with_ros_owner", "result": out_ok},
                 separators=(",", ":"),
             ),
             flush=True,

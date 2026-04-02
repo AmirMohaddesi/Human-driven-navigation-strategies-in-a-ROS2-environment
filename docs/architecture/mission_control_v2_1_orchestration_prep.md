@@ -73,7 +73,7 @@ This produces **visible multi-robot progress** (explicit cross-robot mistake + r
 
 ### Live validation (ownership-safe cancel)
 
-**Implemented:** `scripts/validate_coordinator_ownership_cancel_ros.py` — live ROS against the integrated stack. Sequence: navigate **robot1** (named location **base**) → cancel **robot2** with **robot1**’s `goal_id` → **`wrong_robot`** contract → cancel **robot1** with the same `goal_id` → **success-shaped** cancel (`nav_status` **`cancelling`** or **`not_cancellable`**). Cancel steps use **`cancel_navigation_via_facade`** (`coordinator`); navigate and optional **query-state** use the same **`MissionAgentFacade.with_ros()`** session. Optional trailing **query-state** is log-only. **CLI parity:** `scripts/validate_mission_cli_ownership_cancel_ros.py` (and **`.sh`**) exercises the same sequence via **`mission-agent --ros`**.
+**Implemented:** `scripts/validate_coordinator_ownership_cancel_ros.py` — live ROS against the integrated stack. Sequence: navigate **robot1** (named location **base**) → cancel **robot2** with **robot1**’s `goal_id` → **`wrong_robot`** contract → cancel **robot1** with the same `goal_id` → **success-shaped** cancel (`nav_status` **`cancelling`** or **`not_cancellable`**). Cancel steps use **`cancel_navigation_with_ros`** (Layer B; internally **`cancel_navigation_via_facade`**); navigate and optional **query-state** use one **`MissionAgentFacade.with_ros()`** session for submit + observe. Optional trailing **query-state** is log-only. **CLI parity:** `scripts/validate_mission_cli_ownership_cancel_ros.py` (and **`.sh`**) exercises the same sequence via **`mission-agent --ros`**.
 
 ---
 

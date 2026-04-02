@@ -31,6 +31,30 @@ def cancel_navigation_via_facade(
     return facade.handle_command(cmd)
 
 
+def cancel_navigation_with_ros(
+    robot_id: str,
+    goal_id: str,
+    *,
+    bridge_node_name: str = "mission_bridge_node",
+) -> Dict[str, Any]:
+    """
+    Layer B cancel entrypoint when no shared ``MissionAgentFacade`` exists.
+
+    Opens a ROS facade, delegates to ``cancel_navigation_via_facade``, then closes.
+    Bridge remains ownership authority (wrong_robot vs owned cancel).
+    """
+    facade: MissionAgentFacade | None = None
+    try:
+        facade = MissionAgentFacade.with_ros(bridge_node_name=bridge_node_name)
+        return cancel_navigation_via_facade(facade, robot_id, goal_id)
+    finally:
+        if facade is not None:
+            try:
+                facade.close()
+            except Exception:
+                pass
+
+
 def assign_named_navigation(
     robot_id: str,
     location_name: str,
