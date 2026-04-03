@@ -2,16 +2,27 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, Optional
 
+from ..semantic.blocked_passage_v301 import (
+    BlockedPassageBeliefStore,
+    make_blocked_by_peer_belief_outcome,
+)
 from .mission_client_protocol import MissionClientProtocol
 
 
 class MissionTools:
     """Thin tool layer: validate inputs, call a MissionClientProtocol, normalize dict results."""
 
-    def __init__(self, client: MissionClientProtocol) -> None:
+    def __init__(
+        self,
+        client: MissionClientProtocol,
+        *,
+        blocked_passage_store: Optional[BlockedPassageBeliefStore] = None,
+    ) -> None:
         self._client = client
+        self._blocked_passage_store = blocked_passage_store
 
     def navigate_to_pose(
         self, robot_id: str, x: float, y: float, yaw: float
@@ -31,7 +42,11 @@ class MissionTools:
         return self._normalize_goal_response(raw)
 
     def navigate_to_named_location(
-        self, robot_id: str, location_name: str
+        self,
+        robot_id: str,
+        location_name: str,
+        *,
+        now_utc: Optional[datetime] = None,
     ) -> Dict[str, Any]:
         err = self._validate_robot_id(robot_id)
         if err:
@@ -39,9 +54,24 @@ class MissionTools:
         loc_err = self._validate_location_name(location_name)
         if loc_err:
             return self._invalid_goal_response(loc_err)
+        stripped_loc = location_name.strip()
+        if self._blocked_passage_store is not None:
+            if now_utc is None:
+                return self._invalid_goal_response(
+                    "now_utc is required when blocked_passage_store is configured"
+                )
+            q = self._blocked_passage_store.has_active_blocked_passage(
+                stripped_loc,
+                now_utc=now_utc,
+            )
+            if q.has_active:
+                return self._blocked_by_peer_belief_response(
+                    requested_location_name=stripped_loc,
+                    active_belief_ids=q.active_belief_ids,
+                )
         raw = self._client.navigate_to_named_location(
             robot_id.strip(),
-            location_name.strip(),
+            stripped_loc,
         )
         return self._normalize_goal_response(raw)
 
@@ -106,6 +136,26 @@ class MissionTools:
             "nav_status": "unknown",
             "goal_id": None,
         }
+
+    @staticmethod
+    def _blocked_by_peer_belief_response(
+        *,
+        requested_location_name: str,
+        active_belief_ids: tuple[str, ...],
+    ) -> Dict[str, Any]:
+        out = make_blocked_by_peer_belief_outcome(
+            requested_location_name=requested_location_name,
+            active_belief_ids=active_belief_ids,
+        )
+        out.update(
+            {
+                "status": "failed",
+                "message": "navigation target blocked by peer belief",
+                "nav_status": "unknown",
+                "goal_id": None,
+            }
+        )
+        return out
 
     @staticmethod
     def _invalid_state_response(detail: str) -> Dict[str, Any]:

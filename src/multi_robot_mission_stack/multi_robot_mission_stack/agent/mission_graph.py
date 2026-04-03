@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, Literal, Optional, cast
 
 from langgraph.graph import END, START, StateGraph
@@ -36,10 +37,12 @@ class MissionGraph:
         )
         self._graph = self._build_graph()
 
-    def invoke(self, request: dict) -> dict:
+    def invoke(self, request: dict, *, now_utc: Optional[datetime] = None) -> dict:
         final: MissionGraphState = cast(
             MissionGraphState,
-            self._graph.invoke({"request": request}),
+            self._graph.invoke(
+                {"request": request, "decision_now_utc": now_utc},
+            ),
         )
         out = final.get("result")
         if not isinstance(out, dict):
@@ -192,6 +195,7 @@ class MissionGraph:
         result = self._tools.navigate_to_named_location(
             str(robot_id),
             str(location_name),
+            now_utc=state.get("decision_now_utc"),
         )
         return {"result": result}
 

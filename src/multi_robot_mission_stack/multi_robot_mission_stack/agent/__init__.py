@@ -1,5 +1,6 @@
 """LangGraph-oriented mission tooling above the ROS connection layer."""
 
+from .blocked_passage_shared_runtime_v301 import BlockedPassageSharedStoreRuntime
 from .command_adapter import CommandAdapter
 from .command_models import (
     ExternalMissionCommand,
@@ -19,6 +20,7 @@ from .wait_utils import terminal_outcome, wait_for_terminal_navigation_state
 from .policy_config import MissionPolicyConfig, build_default_policy_config
 
 __all__ = [
+    "BlockedPassageSharedStoreRuntime",
     "CommandAdapter",
     "ExternalMissionCommand",
     "GetNavigationStateCommand",

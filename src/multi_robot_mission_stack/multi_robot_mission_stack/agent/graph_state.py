@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TypedDict
 
 
@@ -24,6 +25,10 @@ class MissionGraphState(TypedDict, total=False):
     allows the request.
 
     ``policy_message`` — message from ``MissionPolicy.evaluate`` (allow or deny text).
+
+    ``decision_now_utc`` — optional explicit UTC instant for time-dependent tool policy
+    (e.g. V3.0.1 ``blocked_passage`` gate on ``navigate_to_named_location``). Set only via
+    ``MissionGraph.invoke(..., now_utc=...)``.
 
     Expected ``request`` shape (explicit keys; extra keys are ignored):
 
@@ -59,3 +64,4 @@ class MissionGraphState(TypedDict, total=False):
     error: str
     policy_allowed: bool
     policy_message: str
+    decision_now_utc: datetime

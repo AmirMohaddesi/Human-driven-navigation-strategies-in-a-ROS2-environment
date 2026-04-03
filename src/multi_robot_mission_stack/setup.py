@@ -55,6 +55,8 @@ setup(
             'image_processor = multi_robot_mission_stack.vision.image_processor:main',
             'mission_bridge_node = multi_robot_mission_stack.bridge.mission_bridge_node:main',
             'mission-agent = multi_robot_mission_stack.agent.cli:main',
+            'blocked_passage_transport_receiver = multi_robot_mission_stack.transport.blocked_passage_receiver_node:main',
+            'blocked_passage_transport_sender = multi_robot_mission_stack.transport.blocked_passage_sender_node:main',
         ],
     },
 )   

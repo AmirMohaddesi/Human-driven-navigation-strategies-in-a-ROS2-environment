@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from .command_adapter import CommandAdapter
@@ -73,11 +74,16 @@ class MissionAgentFacade:
         """Assemble a facade from explicit adapter, graph, and optional client for ``close()``."""
         return cls(adapter, graph, mission_client=mission_client)
 
-    def handle_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_command(
+        self,
+        command: Dict[str, Any],
+        *,
+        now_utc: Optional[datetime] = None,
+    ) -> Dict[str, Any]:
         adapted = self._adapter.adapt_and_validate(command)
         if adapted.get("status") == "failed":
             return adapted
-        return self._graph.invoke(adapted)
+        return self._graph.invoke(adapted, now_utc=now_utc)
 
     def close(self) -> None:
         client = self._mission_client
