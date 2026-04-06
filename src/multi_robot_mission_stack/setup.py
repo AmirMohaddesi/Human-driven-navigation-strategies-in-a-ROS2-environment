@@ -57,6 +57,8 @@ setup(
             'mission-agent = multi_robot_mission_stack.agent.cli:main',
             'blocked_passage_transport_receiver = multi_robot_mission_stack.transport.blocked_passage_receiver_node:main',
             'blocked_passage_transport_sender = multi_robot_mission_stack.transport.blocked_passage_sender_node:main',
+            'robot-b-blocked-passage-demo = multi_robot_mission_stack.demo.robot_b_blocked_passage_runtime_v31:main',
+            'robot-a-blocked-passage-demo = multi_robot_mission_stack.demo.robot_a_blocked_passage_sender_v31:main',
         ],
     },
 )   
