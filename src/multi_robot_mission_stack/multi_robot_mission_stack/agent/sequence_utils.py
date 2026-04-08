@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
+from .navigate_failure_classification_v51 import navigate_failure_kind
 from .wait_utils import wait_for_terminal_navigation_state
 
 if TYPE_CHECKING:
@@ -60,6 +61,9 @@ def run_sequential_named_navigation(
 
     ``step_outcome`` is ``succeeded`` only when navigate yields a non-empty ``goal_id``
     and wait ``outcome`` is ``succeeded``.
+
+    V5.1: on navigate failure, if the result matches the frozen advisory blocked_passage
+    outcome, ``navigate_failure_kind`` is set to ``\"advisory_blocked_passage\"`` (additive).
     """
     err = _validate_steps(steps)
     if err is not None:
@@ -122,6 +126,9 @@ def run_sequential_named_navigation(
         ok_nav, reason = _navigate_ok(nav)
         if not ok_nav:
             rec["error"] = reason
+            k = navigate_failure_kind(nav)
+            if k is not None:
+                rec["navigate_failure_kind"] = k
             failed_count += 1
             out_steps.append(rec)
             if not continue_on_failure:

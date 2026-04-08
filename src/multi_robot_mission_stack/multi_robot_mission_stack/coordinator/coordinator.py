@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Tuple
 
 from ..agent.mission_agent_facade import MissionAgentFacade
+from ..agent.navigate_failure_classification_v51 import navigate_failure_kind
 from ..agent.sequence_utils import _navigate_named_command, _navigate_ok, _validate_steps
 from ..agent.wait_utils import wait_for_terminal_navigation_state
 
@@ -119,7 +120,7 @@ def assign_named_navigation(
 
         ok, reason = _navigate_ok(nav)
         if not ok:
-            return {
+            leg = {
                 "robot_id": rid,
                 "location_name": loc,
                 "goal_id": "",
@@ -129,6 +130,10 @@ def assign_named_navigation(
                 "message": str(nav.get("message", "") or reason),
                 "elapsed_sec": _elapsed(),
             }
+            k = navigate_failure_kind(nav)
+            if k is not None:
+                leg["navigate_failure_kind"] = k
+            return leg
 
         gid = str(nav["goal_id"]).strip()
         try:

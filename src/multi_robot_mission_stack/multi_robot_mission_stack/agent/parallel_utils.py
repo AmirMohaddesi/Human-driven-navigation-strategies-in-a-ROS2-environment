@@ -5,6 +5,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
+from .navigate_failure_classification_v51 import navigate_failure_kind
 from .sequence_utils import StepInput, _navigate_named_command, _validate_steps
 from .wait_utils import wait_for_terminal_navigation_state
 
@@ -87,6 +88,9 @@ def _submit_worker(
     ok, reason = _submit_ok(nav)
     if not ok:
         rec["error"] = reason
+        k = navigate_failure_kind(nav)
+        if k is not None:
+            rec["navigate_failure_kind"] = k
         return rec
 
     rec["goal_id"] = str(nav["goal_id"]).strip()

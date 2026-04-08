@@ -5,9 +5,17 @@ from __future__ import annotations
 from typing import Any, Dict, List
 from unittest.mock import patch
 
+from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+    NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+)
 from multi_robot_mission_stack.agent.parallel_utils import (
     duplicate_robot_error,
     run_parallel_named_navigation,
+)
+from multi_robot_mission_stack.semantic.blocked_passage_v301 import (
+    BLOCKED_OUTCOME_SCHEMA_VERSION,
+    BLOCKED_OUTCOME_VALUE,
+    BLOCKED_REASON_CODE,
 )
 
 
@@ -108,6 +116,64 @@ def test_parallel_both_succeed() -> None:
     assert out["submitted_count"] == 2
     assert out["succeeded_count"] == 2
     assert out["failed_count"] == 0
+
+
+def test_v51_parallel_advisory_blocked_sets_navigate_failure_kind() -> None:
+    advisory = {
+        "outcome": BLOCKED_OUTCOME_VALUE,
+        "schema_version": BLOCKED_OUTCOME_SCHEMA_VERSION,
+        "reason_code": BLOCKED_REASON_CODE,
+        "requested_location_name": "blocked_loc",
+        "active_belief_ids": ["b1"],
+        "status": "failed",
+        "message": "navigation target blocked by peer belief",
+        "nav_status": "unknown",
+        "goal_id": None,
+    }
+
+    class _F:
+        def handle_command(self, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            if cmd.get("location_name") == "blocked_loc":
+                return dict(advisory)
+            return {"status": "accepted", "goal_id": "gok", "nav_status": "submitted", "message": ""}
+
+    def _fake_wait(
+        _fac: Any,
+        robot_id: str,
+        goal_id: str,
+        *,
+        timeout_sec: float,
+        poll_interval_sec: float,
+    ) -> Dict[str, Any]:
+        return {
+            "outcome": "succeeded",
+            "robot_id": robot_id,
+            "goal_id": goal_id,
+            "status": "success",
+            "nav_status": "succeeded",
+            "message": "",
+            "polls": 1,
+            "elapsed_sec": 0.01,
+        }
+
+    with patch(
+        "multi_robot_mission_stack.agent.parallel_utils.wait_for_terminal_navigation_state",
+        side_effect=_fake_wait,
+    ):
+        out = run_parallel_named_navigation(
+            _F(),  # type: ignore[arg-type]
+            [
+                {"robot_id": "robot1", "location_name": "blocked_loc"},
+                {"robot_id": "robot2", "location_name": "base"},
+            ],
+            per_goal_timeout_sec=5.0,
+            poll_interval_sec=0.1,
+        )
+
+    assert out["overall_outcome"] == "failure"
+    by_loc = {s["location_name"]: s for s in out["steps"]}
+    assert by_loc["blocked_loc"]["navigate_failure_kind"] == NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE
+    assert "navigate_failure_kind" not in by_loc["base"]
 
 
 def test_parallel_one_nav_fails() -> None:

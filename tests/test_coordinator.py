@@ -307,6 +307,42 @@ def test_assign_navigate_fails() -> None:
 
     assert out["outcome"] == "failed"
     assert out["goal_id"] == ""
+    assert "navigate_failure_kind" not in out
+    facade.close.assert_called_once()
+
+
+def test_v51_assign_navigate_advisory_blocked_sets_navigate_failure_kind() -> None:
+    from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+        NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+    )
+    from multi_robot_mission_stack.semantic.blocked_passage_v301 import (
+        BLOCKED_OUTCOME_SCHEMA_VERSION,
+        BLOCKED_OUTCOME_VALUE,
+        BLOCKED_REASON_CODE,
+    )
+
+    facade = MagicMock()
+    facade.handle_command.return_value = {
+        "outcome": BLOCKED_OUTCOME_VALUE,
+        "schema_version": BLOCKED_OUTCOME_SCHEMA_VERSION,
+        "reason_code": BLOCKED_REASON_CODE,
+        "requested_location_name": "base",
+        "active_belief_ids": ["b1"],
+        "status": "failed",
+        "message": "navigation target blocked by peer belief",
+        "nav_status": "unknown",
+        "goal_id": None,
+    }
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.MissionAgentFacade.with_ros",
+        return_value=facade,
+    ):
+        out = assign_named_navigation("robot1", "base")
+
+    assert out["outcome"] == "failed"
+    assert out["goal_id"] == ""
+    assert out["navigate_failure_kind"] == NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE
     facade.close.assert_called_once()
 
 

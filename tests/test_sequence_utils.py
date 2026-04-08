@@ -5,7 +5,15 @@ from __future__ import annotations
 from typing import Any, Dict, List
 from unittest.mock import patch
 
+from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+    NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+)
 from multi_robot_mission_stack.agent.sequence_utils import run_sequential_named_navigation
+from multi_robot_mission_stack.semantic.blocked_passage_v301 import (
+    BLOCKED_OUTCOME_SCHEMA_VERSION,
+    BLOCKED_OUTCOME_VALUE,
+    BLOCKED_REASON_CODE,
+)
 
 
 def test_invalid_steps_returns_failure_summary() -> None:
@@ -83,6 +91,38 @@ def test_two_steps_both_succeed() -> None:
     assert out["failed_count"] == 0
     assert out["stopped_early"] is False
     assert all(s["step_outcome"] == "succeeded" for s in out["steps"])
+
+
+def test_v51_advisory_blocked_sets_navigate_failure_kind() -> None:
+    advisory = {
+        "outcome": BLOCKED_OUTCOME_VALUE,
+        "schema_version": BLOCKED_OUTCOME_SCHEMA_VERSION,
+        "reason_code": BLOCKED_REASON_CODE,
+        "requested_location_name": "base",
+        "active_belief_ids": ["b1"],
+        "status": "failed",
+        "message": "navigation target blocked by peer belief",
+        "nav_status": "unknown",
+        "goal_id": None,
+    }
+
+    class _F:
+        def handle_command(self, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            if cmd.get("type") == "navigate":
+                return dict(advisory)
+            return {}
+
+    out = run_sequential_named_navigation(
+        _F(),  # type: ignore[arg-type]
+        [{"robot_id": "robot1", "location_name": "base"}],
+        per_goal_timeout_sec=5.0,
+        poll_interval_sec=0.1,
+    )
+    assert out["overall_outcome"] == "failure"
+    step = out["steps"][0]
+    assert step["error"] == "navigate_status_failed"
+    assert step["navigate_failure_kind"] == NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE
+    assert step["goal_id"] == ""
 
 
 def test_stop_on_first_failure() -> None:
