@@ -23,6 +23,8 @@ Single engineering checkpoint for the **bounded semantic + LLM-assist line** fro
 
 **V3.6 (ROS runtime proof):** built workspace + manual `ros2 service call` evidence for the V3.5 seam — [mission_control_v3_6_checkpoint.md](mission_control_v3_6_checkpoint.md).
 
+**V3.7 (ROS integration test):** automated pytest over the same service (`tests/test_semantic_handoff_service_v37_ros.py`) — [mission_control_v3_7_checkpoint.md](mission_control_v3_7_checkpoint.md).
+
 ---
 
 ## Proven through V3.4 (engineering)
