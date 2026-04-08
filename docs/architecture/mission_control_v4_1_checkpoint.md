@@ -47,5 +47,6 @@ If `rclpy` is not importable, the module is skipped (same class of environment a
 
 ## Related
 
+- [mission_control_v4_2_checkpoint.md](mission_control_v4_2_checkpoint.md) — launch-based proof for this seam
 - [mission_control_v4_0_checkpoint.md](mission_control_v4_0_checkpoint.md)
 - [mission_control_v3_9_checkpoint.md](mission_control_v3_9_checkpoint.md)

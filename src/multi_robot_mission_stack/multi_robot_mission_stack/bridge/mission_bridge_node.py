@@ -81,6 +81,9 @@ class MissionBridgeNode(Node):
         self._advisory_store: Optional[BlockedPassageBeliefStore] = None
         self._setup_advisory_blocked_passage_transport()
 
+        # V4.2+: when false, main() skips the Nav2 action-server wait (headless advisory/test launch).
+        self.declare_parameter("wait_for_nav2_action_servers", True)
+
         # ROS2 service interfaces (thin wrappers over bridge methods)
         self._navigate_to_pose_srv = self.create_service(
             NavigateToPose,
@@ -679,22 +682,27 @@ def main(args=None) -> None:
     try:
         # Wait for Nav2 action servers outside service callbacks so discovery can progress
         # (blocking wait_for_server inside a service handler starves a single-threaded executor).
-        deadline = time.monotonic() + 120.0
-        while time.monotonic() < deadline:
-            for robot_id in node._robot_namespaces:
-                nav_client = node._get_or_create_client(robot_id)
-                if not nav_client.action_server_ready():
+        if bool(node.get_parameter("wait_for_nav2_action_servers").value):
+            deadline = time.monotonic() + 120.0
+            while time.monotonic() < deadline:
+                for robot_id in node._robot_namespaces:
+                    nav_client = node._get_or_create_client(robot_id)
+                    if not nav_client.action_server_ready():
+                        break
+                else:
+                    node.get_logger().info(
+                        "Nav2 NavigateToPose action servers ready for all configured robots."
+                    )
                     break
+                executor.spin_once(timeout_sec=0.1)
             else:
-                node.get_logger().info(
-                    "Nav2 NavigateToPose action servers ready for all configured robots."
+                node.get_logger().warn(
+                    "Timed out waiting for Nav2 NavigateToPose action servers; "
+                    "navigate services may return 'action server not available' until Nav2 is up."
                 )
-                break
-            executor.spin_once(timeout_sec=0.1)
         else:
-            node.get_logger().warn(
-                "Timed out waiting for Nav2 NavigateToPose action servers; "
-                "navigate services may return 'action server not available' until Nav2 is up."
+            node.get_logger().info(
+                "Skipping Nav2 action server wait (wait_for_nav2_action_servers:=false)."
             )
 
         executor.spin()
