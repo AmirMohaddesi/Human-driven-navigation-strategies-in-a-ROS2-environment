@@ -57,5 +57,6 @@ python3 -m pytest tests/test_semantic_handoff_bridge_e2e_v43_ros.py -v
 
 ## Related
 
+- [mission_control_v4_4_checkpoint.md](mission_control_v4_4_checkpoint.md) — real-LLM flag on this launch graph (opt-in smoke)
 - [mission_control_v4_2_checkpoint.md](mission_control_v4_2_checkpoint.md)
 - [mission_control_v3_9_checkpoint.md](mission_control_v3_9_checkpoint.md)
