@@ -64,5 +64,6 @@ python3 -m pytest tests/test_mission_bridge_advisory_launch_v42_ros.py -v
 
 ## Related
 
+- [mission_control_v4_3_checkpoint.md](mission_control_v4_3_checkpoint.md) — handoff mirror + bridge on one topic (E2E)
 - [mission_control_v4_1_checkpoint.md](mission_control_v4_1_checkpoint.md)
 - [mission_control_v3_9_checkpoint.md](mission_control_v3_9_checkpoint.md)
