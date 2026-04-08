@@ -1,0 +1,8 @@
+# V3.9 witness only: run existing named-location advisory check on the witness node's store/facade.
+# decision_now_utc_iso is RFC3339 Zulu (required when blocked_passage_store is wired, same as facade).
+string robot_id
+string location_name
+string decision_now_utc_iso
+---
+bool ok
+string json_result

@@ -60,6 +60,7 @@ setup(
             'robot-b-blocked-passage-demo = multi_robot_mission_stack.demo.robot_b_blocked_passage_runtime_v31:main',
             'robot-a-blocked-passage-demo = multi_robot_mission_stack.demo.robot_a_blocked_passage_sender_v31:main',
             'semantic-production-handoff-v35 = multi_robot_mission_stack.demo.semantic_production_handoff_node_v35:main',
+            'advisory-seam-witness-v39 = multi_robot_mission_stack.demo.advisory_seam_witness_node_v39:main',
         ],
     },
 )    

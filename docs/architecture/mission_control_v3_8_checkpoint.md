@@ -46,6 +46,7 @@ python3 -m pytest tests/test_semantic_handoff_service_v37_ros.py -v
 
 ## Related
 
+- [mission_control_v3_9_checkpoint.md](mission_control_v3_9_checkpoint.md) — launch-based multi-process handoff + witness
 - [mission_control_v3_7_checkpoint.md](mission_control_v3_7_checkpoint.md)
 - [mission_control_v3_5_checkpoint.md](mission_control_v3_5_checkpoint.md)
 - `multi_robot_mission_stack.agent.blocked_passage_shared_runtime_v301.BlockedPassageSharedStoreRuntime`

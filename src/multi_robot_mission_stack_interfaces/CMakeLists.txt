@@ -10,6 +10,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CancelNavigation.srv"
   "srv/NavigateToNamedLocation.srv"
   "srv/ProduceSemanticBlockedPassageV35.srv"
+  "srv/QueryAdvisoryNamedNavV39.srv"
 )
 
 ament_export_dependencies(rosidl_default_runtime)
