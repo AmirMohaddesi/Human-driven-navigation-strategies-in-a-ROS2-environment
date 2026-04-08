@@ -32,7 +32,8 @@ class SemanticProductionHandoffNodeV35(Node):
     def __init__(self, *, store: Optional[BlockedPassageBeliefStore] = None) -> None:
         super().__init__("semantic_production_handoff_v35")
         self.declare_parameter("service_name", "produce_semantic_blocked_passage_v35")
-        self.declare_parameter("allowed_source_robot_ids", [])
+        # Non-empty default so rclpy infers STRING_ARRAY (empty [] becomes BYTE_ARRAY and breaks YAML overrides).
+        self.declare_parameter("allowed_source_robot_ids", [""])
 
         svc_name = str(self.get_parameter("service_name").value or "produce_semantic_blocked_passage_v35")
 

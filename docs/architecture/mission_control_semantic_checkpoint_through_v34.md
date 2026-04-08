@@ -21,6 +21,8 @@ Single engineering checkpoint for the **bounded semantic + LLM-assist line** fro
 
 **V3.5 (ROS handoff extension):** one JSON-in/JSON-out service façade over the **unchanged** V3.4 path — [mission_control_v3_5_checkpoint.md](mission_control_v3_5_checkpoint.md). Does not replace V3.0.1 transport topics.
 
+**V3.6 (ROS runtime proof):** built workspace + manual `ros2 service call` evidence for the V3.5 seam — [mission_control_v3_6_checkpoint.md](mission_control_v3_6_checkpoint.md).
+
 ---
 
 ## Proven through V3.4 (engineering)
