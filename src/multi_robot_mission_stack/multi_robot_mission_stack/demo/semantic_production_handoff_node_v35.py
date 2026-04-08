@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""
+V3.5 — single-node ROS service façade: JSON request → frozen V3.4 path → JSON response.
+
+Service type: ``multi_robot_mission_stack_interfaces/srv/ProduceSemanticBlockedPassageV35``.
+Default service name: ``produce_semantic_blocked_passage_v35``.
+
+Does not change V3.0.1 transport topics or receiver behavior. One process role: handoff + ingest.
+"""
+
+from __future__ import annotations
+
+import json
+from typing import FrozenSet, Optional
+
+import rclpy
+from rclpy.node import Node
+
+from multi_robot_mission_stack.semantic.blocked_passage_v301 import BlockedPassageBeliefStore
+from multi_robot_mission_stack.semantic.semantic_handoff_core_v35 import run_handoff_from_json_request
+from multi_robot_mission_stack_interfaces.srv import ProduceSemanticBlockedPassageV35
+
+
+def _allowlist_from_params(values: list) -> Optional[FrozenSet[str]]:
+    if not values:
+        return None
+    out = frozenset(str(x).strip() for x in values if str(x).strip())
+    return out if out else None
+
+
+class SemanticProductionHandoffNodeV35(Node):
+    def __init__(self, *, store: Optional[BlockedPassageBeliefStore] = None) -> None:
+        super().__init__("semantic_production_handoff_v35")
+        self.declare_parameter("service_name", "produce_semantic_blocked_passage_v35")
+        self.declare_parameter("allowed_source_robot_ids", [])
+
+        svc_name = str(self.get_parameter("service_name").value or "produce_semantic_blocked_passage_v35")
+
+        if store is not None:
+            self._store = store
+        else:
+            raw_allow = list(self.get_parameter("allowed_source_robot_ids").value)
+            allowed = _allowlist_from_params(raw_allow)
+            self._store = BlockedPassageBeliefStore(allowed_source_robot_ids=allowed)
+
+        self._srv = self.create_service(
+            ProduceSemanticBlockedPassageV35,
+            svc_name,
+            self._handle,
+        )
+        self.get_logger().info("V3.5 semantic handoff service ready: %s" % svc_name)
+
+    def _handle(
+        self,
+        request: ProduceSemanticBlockedPassageV35.Request,
+        response: ProduceSemanticBlockedPassageV35.Response,
+    ) -> ProduceSemanticBlockedPassageV35.Response:
+        try:
+            payload = run_handoff_from_json_request(
+                request.json_request,
+                store=self._store,
+            )
+            response.json_response = json.dumps(payload, separators=(",", ":"))
+        except Exception as exc:
+            self.get_logger().exception("handoff internal error: %s", exc)
+            response.json_response = json.dumps(
+                {
+                    "outcome": "handoff_internal_error",
+                    "detail": str(exc),
+                },
+                separators=(",", ":"),
+            )
+        return response
+
+
+def main() -> None:
+    rclpy.init()
+    try:
+        node = SemanticProductionHandoffNodeV35()
+        rclpy.spin(node)
+    finally:
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

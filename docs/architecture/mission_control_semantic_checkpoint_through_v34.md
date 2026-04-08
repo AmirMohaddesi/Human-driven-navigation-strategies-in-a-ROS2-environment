@@ -19,6 +19,8 @@ Single engineering checkpoint for the **bounded semantic + LLM-assist line** fro
 | **V3.3.b** | Repeated trials over fixed fixtures; outcome/reason counts only (`run_llm_eval_harness_v33b`, optional runner `--live`). |
 | **V3.4** | After `accepted_record`, same dict admitted via **existing** `BlockedPassageBeliefStore.ingest` only; terminal ingest outcomes (`ingest_stored`, `ingest_duplicate_ignored`, `ingest_rejected`); **no** edits to boundary, assembler, adapter, or store ingest logic. |
 
+**V3.5 (ROS handoff extension):** one JSON-in/JSON-out service façade over the **unchanged** V3.4 path — [mission_control_v3_5_checkpoint.md](mission_control_v3_5_checkpoint.md). Does not replace V3.0.1 transport topics.
+
 ---
 
 ## Proven through V3.4 (engineering)

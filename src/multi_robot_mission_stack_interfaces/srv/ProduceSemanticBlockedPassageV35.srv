@@ -1,0 +1,5 @@
+# V3.5 bounded ROS handoff: UTF-8 JSON request (see semantic_handoff_core_v35 module doc).
+# Response is UTF-8 JSON with outcome and optional fields (belief_id, reasons, ingest_errors).
+string json_request
+---
+string json_response
