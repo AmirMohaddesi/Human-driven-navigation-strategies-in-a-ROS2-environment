@@ -346,6 +346,35 @@ def test_v51_assign_navigate_advisory_blocked_sets_navigate_failure_kind() -> No
     facade.close.assert_called_once()
 
 
+def test_v52_assign_navigate_bridge_wire_shape_sets_navigate_failure_kind() -> None:
+    """V5.2: ROS client normalizes service response — no outcome/reason_code keys."""
+    from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+        NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+    )
+    from multi_robot_mission_stack.semantic.blocked_passage_v301 import (
+        BLOCKED_PEER_BELIEF_FAILURE_MESSAGE,
+    )
+
+    facade = MagicMock()
+    facade.handle_command.return_value = {
+        "status": "failed",
+        "message": BLOCKED_PEER_BELIEF_FAILURE_MESSAGE,
+        "nav_status": "unknown",
+        "goal_id": "",
+    }
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.MissionAgentFacade.with_ros",
+        return_value=facade,
+    ):
+        out = assign_named_navigation("robot1", "base")
+
+    assert out["outcome"] == "failed"
+    assert out["goal_id"] == ""
+    assert out["navigate_failure_kind"] == NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE
+    facade.close.assert_called_once()
+
+
 def test_assign_named_sequence_two_legs() -> None:
     calls: list[int] = [0]
 

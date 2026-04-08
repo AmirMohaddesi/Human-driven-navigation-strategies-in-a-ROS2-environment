@@ -51,6 +51,8 @@ TTL_SKEW_ALLOWANCE_SEC = 0.5
 BLOCKED_OUTCOME_SCHEMA_VERSION = "v3.0.1"
 BLOCKED_OUTCOME_VALUE = "navigation_target_blocked"
 BLOCKED_REASON_CODE = "blocked_passage_peer_belief"
+# Mission-layer line returned by bridge + MissionTools for advisory peer-belief block (wire-normalized path).
+BLOCKED_PEER_BELIEF_FAILURE_MESSAGE = "navigation target blocked by peer belief"
 
 
 def make_blocked_by_peer_belief_outcome(

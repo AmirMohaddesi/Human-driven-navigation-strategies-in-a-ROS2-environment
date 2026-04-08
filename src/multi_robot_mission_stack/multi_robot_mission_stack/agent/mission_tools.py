@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from ..semantic.blocked_passage_v301 import (
+    BLOCKED_PEER_BELIEF_FAILURE_MESSAGE,
     BlockedPassageBeliefStore,
     make_blocked_by_peer_belief_outcome,
 )
@@ -150,7 +151,7 @@ class MissionTools:
         out.update(
             {
                 "status": "failed",
-                "message": "navigation target blocked by peer belief",
+                "message": BLOCKED_PEER_BELIEF_FAILURE_MESSAGE,
                 "nav_status": "unknown",
                 "goal_id": None,
             }

@@ -13,7 +13,10 @@ from std_msgs.msg import String
 from ament_index_python.packages import get_package_share_directory
 import yaml
 
-from multi_robot_mission_stack.semantic.blocked_passage_v301 import BlockedPassageBeliefStore
+from multi_robot_mission_stack.semantic.blocked_passage_v301 import (
+    BLOCKED_PEER_BELIEF_FAILURE_MESSAGE,
+    BlockedPassageBeliefStore,
+)
 from multi_robot_mission_stack.transport.blocked_passage_json_v301 import (
     ingest_blocked_passage_transport_payload,
 )
@@ -584,7 +587,7 @@ class MissionBridgeNode(Node):
                 )
                 return {
                     "status": "failed",
-                    "message": "navigation target blocked by peer belief",
+                    "message": BLOCKED_PEER_BELIEF_FAILURE_MESSAGE,
                     "data": {
                         "robot_id": robot_id,
                         "location_name": location_name,
