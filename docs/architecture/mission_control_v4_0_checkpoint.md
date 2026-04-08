@@ -106,4 +106,5 @@ Verified by `tests/test_semantic_real_llm_smoke_v40_ros.py::test_v40_real_adapte
 
 ## Related
 
+- [mission_control_v4_1_checkpoint.md](mission_control_v4_1_checkpoint.md) — optional advisory seam on `mission_bridge_node`
 - [mission_control_v3_9_checkpoint.md](mission_control_v3_9_checkpoint.md)

@@ -1,14 +1,22 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Tuple
 
 import json
 import os
 import time
+from datetime import datetime, timezone
 
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
+from rclpy.parameter import Parameter
+from std_msgs.msg import String
 from ament_index_python.packages import get_package_share_directory
 import yaml
+
+from multi_robot_mission_stack.semantic.blocked_passage_v301 import BlockedPassageBeliefStore
+from multi_robot_mission_stack.transport.blocked_passage_json_v301 import (
+    ingest_blocked_passage_transport_payload,
+)
 
 from multi_robot_mission_stack_interfaces.srv import (
     NavigateToPose,
@@ -18,6 +26,13 @@ from multi_robot_mission_stack_interfaces.srv import (
 )
 
 from .nav2_client import Nav2Client
+
+
+def _advisory_allowlist_from_params(values: list) -> Optional[FrozenSet[str]]:
+    if not values:
+        return None
+    out = frozenset(str(x).strip() for x in values if str(x).strip())
+    return out if out else None
 
 
 def _mission_log(logger: Any, event: str, level: str = "info", **fields: Any) -> None:
@@ -35,8 +50,11 @@ def _mission_log(logger: Any, event: str, level: str = "info", **fields: Any) ->
 class MissionBridgeNode(Node):
     """Minimal mission-level bridge node."""
 
-    def __init__(self) -> None:
-        super().__init__("mission_bridge_node")
+    def __init__(self, *, parameter_overrides: Optional[List[Parameter]] = None) -> None:
+        super().__init__(
+            "mission_bridge_node",
+            parameter_overrides=parameter_overrides or [],
+        )
 
         # Hard-coded mapping: robot_id -> namespace
         self._robot_namespaces: Dict[str, str] = {
@@ -56,6 +74,12 @@ class MissionBridgeNode(Node):
         # Named locations loaded from config (location_name -> {x, y, yaw})
         self._named_locations: Dict[str, Dict[str, float]] = {}
         self._load_named_locations()
+
+        # V4.1 optional: ingest advisory blocked_passage from frozen V3.0.1 transport; gate named nav.
+        self.declare_parameter("advisory_blocked_passage_transport_topic", "")
+        self.declare_parameter("advisory_blocked_passage_allowed_source_robot_ids", [""])
+        self._advisory_store: Optional[BlockedPassageBeliefStore] = None
+        self._setup_advisory_blocked_passage_transport()
 
         # ROS2 service interfaces (thin wrappers over bridge methods)
         self._navigate_to_pose_srv = self.create_service(
@@ -78,6 +102,35 @@ class MissionBridgeNode(Node):
             "navigate_to_named_location",
             self._handle_navigate_to_named_location,
         )
+
+    def _setup_advisory_blocked_passage_transport(self) -> None:
+        topic = str(self.get_parameter("advisory_blocked_passage_transport_topic").value or "").strip()
+        if not topic:
+            return
+        raw_allow = list(self.get_parameter("advisory_blocked_passage_allowed_source_robot_ids").value)
+        allowed = _advisory_allowlist_from_params(raw_allow)
+        self._advisory_store = BlockedPassageBeliefStore(allowed_source_robot_ids=allowed)
+        self.create_subscription(String, topic, self._on_advisory_blocked_passage_transport, 10)
+        self.get_logger().info(
+            "V4.1 advisory blocked_passage ingest enabled on %s (named-location gate active)" % topic
+        )
+
+    def _on_advisory_blocked_passage_transport(self, msg: String) -> None:
+        assert self._advisory_store is not None
+        now = self.get_clock().now()
+        ns = int(now.nanoseconds)
+        now_utc = datetime.fromtimestamp(ns / 1e9, tz=timezone.utc)
+        res = ingest_blocked_passage_transport_payload(
+            self._advisory_store, msg.data, now_utc=now_utc
+        )
+        if res.stored:
+            self.get_logger().info("advisory blocked_passage ingested at bridge")
+        elif res.duplicate_ignored:
+            self.get_logger().info("advisory duplicate belief_id ignored")
+        elif res.rejected:
+            self.get_logger().warning(
+                "advisory blocked_passage ingest rejected: %s" % ("; ".join(res.errors),)
+            )
 
     def _load_named_locations(self) -> None:
         """Load named locations from the installed config YAML file."""
@@ -509,6 +562,33 @@ class MissionBridgeNode(Node):
                     "nav_status": "rejected",
                 },
             }
+
+        if self._advisory_store is not None:
+            now = self.get_clock().now()
+            ns = int(now.nanoseconds)
+            now_utc = datetime.fromtimestamp(ns / 1e9, tz=timezone.utc)
+            q = self._advisory_store.has_active_blocked_passage(
+                location_name, now_utc=now_utc
+            )
+            if q.has_active:
+                _mission_log(
+                    self.get_logger(),
+                    "navigate_named_advisory_blocked",
+                    level="warn",
+                    robot_id=robot_id,
+                    location_name=location_name,
+                    active_belief_ids=list(q.active_belief_ids),
+                )
+                return {
+                    "status": "failed",
+                    "message": "navigation target blocked by peer belief",
+                    "data": {
+                        "robot_id": robot_id,
+                        "location_name": location_name,
+                        "goal_id": "",
+                        "nav_status": "unknown",
+                    },
+                }
 
         loc = self._named_locations.get(location_name)
         if loc is None:
