@@ -52,5 +52,6 @@ PYTHONPATH= python3 -m pytest tests/test_semantic_handoff_core_v35.py tests/test
 
 ## Related
 
+- [mission_control_v3_8_checkpoint.md](mission_control_v3_8_checkpoint.md) — shared store + facade/policy observation (pure Python)
 - [mission_control_v3_6_checkpoint.md](mission_control_v3_6_checkpoint.md)
 - [mission_control_v3_5_checkpoint.md](mission_control_v3_5_checkpoint.md)
