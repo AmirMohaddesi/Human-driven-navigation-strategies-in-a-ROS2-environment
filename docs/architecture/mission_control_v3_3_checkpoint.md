@@ -82,5 +82,6 @@ Optional live provider checks remain **opt-in** and do not block CI.
 
 ## Related documents
 
+- [mission_control_semantic_checkpoint_through_v34.md](mission_control_semantic_checkpoint_through_v34.md) — semantic + LLM-assist line closed through V3.4 (production-to-ingest).
 - [mission_control_v3_0_1_checkpoint.md](mission_control_v3_0_1_checkpoint.md)
 - [mission_control_v3_1_checkpoint.md](mission_control_v3_1_checkpoint.md)
