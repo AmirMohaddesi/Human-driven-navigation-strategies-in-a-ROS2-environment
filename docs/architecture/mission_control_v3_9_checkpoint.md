@@ -21,7 +21,7 @@ Runtime **topology realism**, not semantic redesign: handoff runs in one process
 
 ## Intentionally not proven
 
-- Real LLM on the service path in this topology.
+- Real LLM on the service path in this topology was **out of scope for V3.9** (fake adapter only). Bounded opt-in real-model smoke on the **same** launch file is documented in [mission_control_v4_0_checkpoint.md](mission_control_v4_0_checkpoint.md).
 - Second fact type, store redesign, mission bridge integration.
 - Product / operational hardening.
 
