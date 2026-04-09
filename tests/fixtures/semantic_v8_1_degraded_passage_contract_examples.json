@@ -1,0 +1,97 @@
+{
+  "schema_version": "v8.1.fixture.1",
+  "fact_schema_version": "v8.1",
+  "fact_type": "degraded_passage",
+  "allowed_degradation_class": [
+    "slow_zone",
+    "narrow_clearance",
+    "intermittent_obstacle",
+    "surface_uncertain"
+  ],
+  "cases": [
+    {
+      "case_id": "accept_minimal_valid",
+      "expect": "accept",
+      "record": {
+        "schema_version": "v8.1",
+        "belief_id": "123e4567-e89b-42d3-a456-426614174000",
+        "fact_type": "degraded_passage",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "lidar_occlusion",
+          "observation_id": "223e4567-e89b-42d3-a456-426614174111"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "degradation_class": "slow_zone",
+        "recommended_speed_factor": 0.6
+      }
+    },
+    {
+      "case_id": "reject_wrong_fact_type",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v8.1",
+        "belief_id": "323e4567-e89b-42d3-a456-426614174222",
+        "fact_type": "blocked_passage",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "lidar_occlusion",
+          "observation_id": "423e4567-e89b-42d3-a456-426614174333"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "degradation_class": "slow_zone",
+        "recommended_speed_factor": 0.6
+      }
+    },
+    {
+      "case_id": "reject_speed_factor_out_of_range",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v8.1",
+        "belief_id": "523e4567-e89b-42d3-a456-426614174444",
+        "fact_type": "degraded_passage",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "lidar_occlusion",
+          "observation_id": "623e4567-e89b-42d3-a456-426614174555"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "degradation_class": "slow_zone",
+        "recommended_speed_factor": 1.4
+      }
+    },
+    {
+      "case_id": "reject_unknown_degradation_class",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v8.1",
+        "belief_id": "723e4567-e89b-42d3-a456-426614174666",
+        "fact_type": "degraded_passage",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "lidar_occlusion",
+          "observation_id": "823e4567-e89b-42d3-a456-426614174777"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "degradation_class": "unknown_mode",
+        "recommended_speed_factor": 0.7
+      }
+    }
+  ]
+}

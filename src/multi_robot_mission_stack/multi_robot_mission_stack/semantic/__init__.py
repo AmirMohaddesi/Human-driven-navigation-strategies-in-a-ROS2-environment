@@ -9,6 +9,12 @@ from .blocked_passage_v301 import (
     make_blocked_by_peer_belief_outcome,
     validate_blocked_passage_record,
 )
+from .degraded_passage_v81 import validate_degraded_passage_record
+from .degraded_passage_v81 import (
+    ActiveDegradedQueryResult,
+    DegradedPassageBeliefStore,
+    TTL_SKEW_ALLOWANCE_SEC as DEGRADED_TTL_SKEW_ALLOWANCE_SEC,
+)
 
 __all__ = [
     "TTL_SKEW_ALLOWANCE_SEC",
@@ -17,5 +23,9 @@ __all__ = [
     "IngestResult",
     "build_blocked_passage_record_stub",
     "make_blocked_by_peer_belief_outcome",
+    "DEGRADED_TTL_SKEW_ALLOWANCE_SEC",
+    "ActiveDegradedQueryResult",
+    "DegradedPassageBeliefStore",
     "validate_blocked_passage_record",
+    "validate_degraded_passage_record",
 ]
