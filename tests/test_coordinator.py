@@ -410,6 +410,8 @@ def test_assign_named_sequence_two_legs() -> None:
     assert out["succeeded_count"] == 2
     assert out["failed_count"] == 0
     assert out["stopped_early"] is False
+    assert out["hard_stop_on_advisory_blocked"] is False
+    assert out["stopped_due_to_advisory_blocked"] is False
 
 
 def test_assign_named_sequence_stops_early() -> None:
@@ -441,12 +443,347 @@ def test_assign_named_sequence_stops_early() -> None:
     assert out["steps_run"] == 1
     assert out["stopped_early"] is True
     assert out["failed_count"] == 1
+    assert out["hard_stop_on_advisory_blocked"] is False
+    assert out["stopped_due_to_advisory_blocked"] is False
+
+
+def test_v61_hard_stop_advisory_blocked_stops_despite_continue_on_failure() -> None:
+    from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+        NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+    )
+
+    seq = [
+        {"robot_id": "robot1", "location_name": "blocked_loc"},
+        {"robot_id": "robot2", "location_name": "test_goal"},
+    ]
+
+    def _fake(rid: str, loc: str, **kwargs: Any) -> Dict[str, Any]:
+        if loc == "blocked_loc":
+            return {
+                "robot_id": rid,
+                "location_name": loc,
+                "goal_id": "",
+                "outcome": "failed",
+                "status": "failed",
+                "nav_status": "unknown",
+                "message": "navigation target blocked by peer belief",
+                "navigate_failure_kind": NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+                "elapsed_sec": 0.0,
+            }
+        return {
+            "robot_id": rid,
+            "location_name": loc,
+            "goal_id": "g2",
+            "outcome": "succeeded",
+            "status": "success",
+            "nav_status": "succeeded",
+            "message": "",
+            "elapsed_sec": 0.1,
+        }
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.assign_named_navigation",
+        side_effect=_fake,
+    ):
+        out = assign_named_sequence(
+            seq,
+            continue_on_failure=True,
+            hard_stop_on_advisory_blocked=True,
+        )
+
+    assert out["steps_run"] == 1
+    assert out["failed_count"] == 1
+    assert out["stopped_early"] is True
+    assert out["stopped_due_to_advisory_blocked"] is True
+    assert out["hard_stop_on_advisory_blocked"] is True
+
+
+def test_v61_continue_on_failure_still_runs_after_generic_failure_with_hard_stop_flag() -> None:
+    seq = [
+        {"robot_id": "robot1", "location_name": "a"},
+        {"robot_id": "robot2", "location_name": "b"},
+    ]
+
+    def _fake(rid: str, loc: str, **kwargs: Any) -> Dict[str, Any]:
+        if loc == "a":
+            return {
+                "robot_id": rid,
+                "location_name": loc,
+                "goal_id": "",
+                "outcome": "failed",
+                "status": "failed",
+                "nav_status": "unknown",
+                "message": "other",
+                "elapsed_sec": 0.0,
+            }
+        return {
+            "robot_id": rid,
+            "location_name": loc,
+            "goal_id": "g2",
+            "outcome": "succeeded",
+            "status": "success",
+            "nav_status": "succeeded",
+            "message": "",
+            "elapsed_sec": 0.1,
+        }
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.assign_named_navigation",
+        side_effect=_fake,
+    ):
+        out = assign_named_sequence(
+            seq,
+            continue_on_failure=True,
+            hard_stop_on_advisory_blocked=True,
+        )
+
+    assert out["steps_run"] == 2
+    assert out["failed_count"] == 1
+    assert out["stopped_early"] is False
+    assert out["stopped_due_to_advisory_blocked"] is False
+
+
+def test_normalize_team_named_mission_spec_alternate_ok() -> None:
+    out = normalize_team_named_mission_spec(
+        [
+            {
+                "robot_id": "robot1",
+                "location_name": "base",
+                "alternate_location_name": "  test_goal  ",
+            },
+        ],
+        mode="sequence",
+    )
+    assert out["ok"] is True
+    assert out["steps"] == [
+        {
+            "robot_id": "robot1",
+            "location_name": "base",
+            "alternate_location_name": "test_goal",
+        },
+    ]
+
+
+def test_normalize_team_named_mission_spec_alternate_equals_primary() -> None:
+    out = normalize_team_named_mission_spec(
+        [{"robot_id": "r1", "location_name": "base", "alternate_location_name": "base"}],
+        mode="sequence",
+    )
+    assert out["ok"] is False
+    assert "must differ" in (out.get("error") or "")
+
+
+def test_normalize_team_named_mission_spec_alternate_not_allowlisted() -> None:
+    out = normalize_team_named_mission_spec(
+        [{"robot_id": "r1", "location_name": "base", "alternate_location_name": "unknown_x"}],
+        mode="sequence",
+    )
+    assert out["ok"] is False
+    assert "not permitted" in (out.get("error") or "")
+
+
+def test_assign_named_sequence_invalid_alternate_rejected() -> None:
+    out = assign_named_sequence(
+        [
+            {
+                "robot_id": "robot1",
+                "location_name": "base",
+                "alternate_location_name": "base",
+            },
+        ],
+    )
+    assert out["overall_outcome"] == "failure"
+    assert out["steps_run"] == 0
+    assert "must differ" in str(out.get("error", ""))
+
+
+def test_v71_advisory_primary_triggers_single_alternate_navigate() -> None:
+    from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+        NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+    )
+
+    nav_locs: list[str] = []
+
+    def _fake(rid: str, loc: str, **kwargs: Any) -> Dict[str, Any]:
+        nav_locs.append(loc)
+        if loc == "base":
+            return {
+                "robot_id": rid,
+                "location_name": loc,
+                "goal_id": "",
+                "outcome": "failed",
+                "status": "failed",
+                "nav_status": "unknown",
+                "message": "navigation target blocked by peer belief",
+                "navigate_failure_kind": NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+                "elapsed_sec": 0.0,
+            }
+        return {
+            "robot_id": rid,
+            "location_name": loc,
+            "goal_id": "g1",
+            "outcome": "succeeded",
+            "status": "success",
+            "nav_status": "succeeded",
+            "message": "",
+            "elapsed_sec": 0.1,
+        }
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.assign_named_navigation",
+        side_effect=_fake,
+    ):
+        out = assign_named_sequence(
+            [
+                {
+                    "robot_id": "robot1",
+                    "location_name": "base",
+                    "alternate_location_name": "test_goal",
+                },
+            ],
+        )
+
+    assert nav_locs == ["base", "test_goal"]
+    assert out["steps_run"] == 1
+    assert out["succeeded_count"] == 1
+    assert out["failed_count"] == 0
+    st0 = out["steps"][0]
+    assert st0["alternate_attempted"] is True
+    assert st0["step_outcome"] == "succeeded"
+    assert st0["result"]["outcome"] == "succeeded"
+
+
+def test_v71_generic_primary_failure_does_not_attempt_alternate() -> None:
+    nav_locs: list[str] = []
+
+    def _fake(rid: str, loc: str, **kwargs: Any) -> Dict[str, Any]:
+        nav_locs.append(loc)
+        return {
+            "robot_id": rid,
+            "location_name": loc,
+            "goal_id": "",
+            "outcome": "failed",
+            "status": "failed",
+            "nav_status": "unknown",
+            "message": "other",
+            "elapsed_sec": 0.0,
+        }
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.assign_named_navigation",
+        side_effect=_fake,
+    ):
+        out = assign_named_sequence(
+            [
+                {
+                    "robot_id": "robot1",
+                    "location_name": "base",
+                    "alternate_location_name": "test_goal",
+                },
+            ],
+        )
+
+    assert nav_locs == ["base"]
+    assert out["failed_count"] == 1
+    assert out["steps"][0]["step_outcome"] == "failed"
+    assert out["steps"][0]["alternate_attempted"] is False
+
+
+def test_v71_alternate_success_then_second_leg_runs() -> None:
+    from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+        NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+    )
+
+    def _fake(rid: str, loc: str, **kwargs: Any) -> Dict[str, Any]:
+        if rid == "robot1" and loc == "base":
+            return {
+                "robot_id": rid,
+                "location_name": loc,
+                "goal_id": "",
+                "outcome": "failed",
+                "status": "failed",
+                "nav_status": "unknown",
+                "message": "navigation target blocked by peer belief",
+                "navigate_failure_kind": NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+                "elapsed_sec": 0.0,
+            }
+        return {
+            "robot_id": rid,
+            "location_name": loc,
+            "goal_id": "g",
+            "outcome": "succeeded",
+            "status": "success",
+            "nav_status": "succeeded",
+            "message": "",
+            "elapsed_sec": 0.1,
+        }
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.assign_named_navigation",
+        side_effect=_fake,
+    ):
+        out = assign_named_sequence(
+            [
+                {
+                    "robot_id": "robot1",
+                    "location_name": "base",
+                    "alternate_location_name": "test_goal",
+                },
+                {"robot_id": "robot2", "location_name": "base"},
+            ],
+        )
+
+    assert out["steps_run"] == 2
+    assert out["overall_outcome"] == "success"
+    assert out["succeeded_count"] == 2
+
+
+def test_v71_hard_stop_applies_to_effective_leg_after_alternate_still_advisory() -> None:
+    from multi_robot_mission_stack.agent.navigate_failure_classification_v51 import (
+        NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+    )
+
+    adv = {
+        "robot_id": "robot1",
+        "goal_id": "",
+        "outcome": "failed",
+        "status": "failed",
+        "nav_status": "unknown",
+        "message": "navigation target blocked by peer belief",
+        "navigate_failure_kind": NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+        "elapsed_sec": 0.0,
+    }
+
+    def _fake(rid: str, loc: str, **kwargs: Any) -> Dict[str, Any]:
+        return {**adv, "location_name": loc}
+
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.assign_named_navigation",
+        side_effect=_fake,
+    ):
+        out = assign_named_sequence(
+            [
+                {
+                    "robot_id": "robot1",
+                    "location_name": "base",
+                    "alternate_location_name": "test_goal",
+                },
+                {"robot_id": "robot2", "location_name": "base"},
+            ],
+            continue_on_failure=True,
+            hard_stop_on_advisory_blocked=True,
+        )
+
+    assert out["steps_run"] == 1
+    assert out["stopped_due_to_advisory_blocked"] is True
 
 
 def test_assign_named_sequence_invalid_steps() -> None:
     out = assign_named_sequence(123)  # type: ignore[arg-type]
     assert out["overall_outcome"] == "failure"
     assert "error" in out
+    assert out["hard_stop_on_advisory_blocked"] is False
+    assert out["stopped_due_to_advisory_blocked"] is False
 
 
 def test_summarize_sequence_result_full_success() -> None:
@@ -654,6 +991,7 @@ def test_assign_team_named_mission_sequence_dispatches() -> None:
     mock_seq.assert_called_once()
     _, kwargs = mock_seq.call_args
     assert kwargs["continue_on_failure"] is True
+    assert kwargs["hard_stop_on_advisory_blocked"] is False
     assert kwargs["bridge_node_name"] == "bn"
     assert out["mode"] == "sequence"
     assert out["ok"] is True
@@ -836,6 +1174,7 @@ def test_run_team_named_mission_spec_sequence_dispatches() -> None:
         per_goal_timeout_sec=30.0,
         poll_interval_sec=0.5,
         continue_on_failure=True,
+        hard_stop_on_advisory_blocked=False,
         max_workers=None,
         bridge_node_name="bn",
     )
@@ -864,7 +1203,39 @@ def test_run_team_named_mission_spec_parallel_max_workers() -> None:
         per_goal_timeout_sec=60.0,
         poll_interval_sec=1.0,
         continue_on_failure=False,
+        hard_stop_on_advisory_blocked=False,
         max_workers=2,
+        bridge_node_name="mission_bridge_node",
+    )
+    assert out is inner
+
+
+def test_v61_run_team_named_mission_spec_threads_hard_stop_option() -> None:
+    inner = {
+        "mode": "sequence",
+        "ok": True,
+        "overall_outcome": "success",
+        "summary": {},
+    }
+    spec = {
+        "mode": "sequence",
+        "steps": [{"robot_id": "r1", "location_name": "a"}],
+        "options": {"hard_stop_on_advisory_blocked": True},
+    }
+    with patch(
+        "multi_robot_mission_stack.coordinator.coordinator.assign_team_named_mission",
+        return_value=inner,
+    ) as mock_assign:
+        out = run_team_named_mission_spec(spec)
+
+    mock_assign.assert_called_once_with(
+        spec["steps"],
+        "sequence",
+        per_goal_timeout_sec=120.0,
+        poll_interval_sec=1.0,
+        continue_on_failure=False,
+        hard_stop_on_advisory_blocked=True,
+        max_workers=None,
         bridge_node_name="mission_bridge_node",
     )
     assert out is inner
@@ -926,6 +1297,7 @@ def test_preflight_team_named_mission_spec_sequence_success() -> None:
     ]
     assert out["options"]["per_goal_timeout_sec"] == 99.0
     assert "ignored" not in out["options"]
+    assert out["options"]["hard_stop_on_advisory_blocked"] is False
     assert out["summary"]["error"] is None
     assert "sequence" in out["summary"]["message"].lower()
 
@@ -1009,7 +1381,8 @@ def test_preview_team_named_mission_spec_sequence_success() -> None:
     assert out["lines"][:2] == ["Mode: sequence", "Steps: 2"]
     assert out["lines"][2] == "Step 0: robot1 -> base"
     assert out["lines"][3] == "Step 1: robot2 -> goal"
-    assert out["lines"][-1] == "Continue on failure: true"
+    assert out["lines"][-2] == "Continue on failure: true"
+    assert out["lines"][-1] == "Hard stop on advisory blocked: false"
     assert out["summary"]["error"] is None
     assert "sequence" in out["summary"]["message"].lower()
 

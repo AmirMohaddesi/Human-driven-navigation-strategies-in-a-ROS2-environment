@@ -4,12 +4,44 @@ from __future__ import annotations
 
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..agent.mission_agent_facade import MissionAgentFacade
-from ..agent.navigate_failure_classification_v51 import navigate_failure_kind
+from ..agent.navigate_failure_classification_v51 import (
+    NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE,
+    navigate_failure_kind,
+)
+from ..agent.policy_config import build_default_policy_config
 from ..agent.sequence_utils import _navigate_named_command, _navigate_ok, _validate_steps
 from ..agent.wait_utils import wait_for_terminal_navigation_state
+
+
+def _validate_coordinator_sequence_steps(steps: Any) -> Optional[str]:
+    """
+    Sequence steps: robot_id + location_name (via shared list checks) plus optional
+    ``alternate_location_name`` (V7.1): non-empty, distinct from primary, allowlisted.
+    """
+    base = _validate_steps(steps)
+    if base is not None:
+        return base
+    allowed = build_default_policy_config().allowed_locations
+    assert isinstance(steps, list)
+    for i, raw in enumerate(steps):
+        assert isinstance(raw, dict)
+        loc = str(raw.get("location_name", "")).strip()
+        alt_raw = raw.get("alternate_location_name", None)
+        if alt_raw is None:
+            continue
+        if not isinstance(alt_raw, str):
+            return f"step {i} alternate_location_name must be a string"
+        a = alt_raw.strip()
+        if not a:
+            continue
+        if a == loc:
+            return f"step {i} alternate_location_name must differ from location_name"
+        if a not in allowed:
+            return f"step {i} alternate_location_name {a!r} is not permitted"
+    return None
 
 
 def cancel_navigation_via_facade(
@@ -176,17 +208,27 @@ def assign_named_navigation(
 
 
 def assign_named_sequence(
-    steps: List[Dict[str, str]],
+    steps: List[Dict[str, Any]],
     *,
     per_goal_timeout_sec: float = 120.0,
     poll_interval_sec: float = 1.0,
     continue_on_failure: bool = False,
+    hard_stop_on_advisory_blocked: bool = False,
     bridge_node_name: str = "mission_bridge_node",
 ) -> Dict[str, Any]:
     """
     Sequential team mission: each step is one ``assign_named_navigation`` leg (own facade per leg).
+
+    **V7.1:** Optional ``alternate_location_name`` per step: after a primary failure with
+    ``navigate_failure_kind == advisory_blocked_passage``, the coordinator issues exactly one
+    navigate to the alternate (same ``robot_id``), then uses that result as the leg outcome for
+    success/failure and V6.1 hard-stop evaluation.
+
+    When ``hard_stop_on_advisory_blocked`` is true, evaluation uses the **effective** leg result
+    (after any alternate attempt), then the sequence may stop per V6.1.
     """
-    err = _validate_steps(steps)
+    err = _validate_coordinator_sequence_steps(steps)
+    hard = bool(hard_stop_on_advisory_blocked)
     if err is not None:
         n = len(steps) if isinstance(steps, list) else 0
         return {
@@ -197,6 +239,8 @@ def assign_named_sequence(
             "failed_count": 0,
             "stopped_early": False,
             "continue_on_failure": bool(continue_on_failure),
+            "hard_stop_on_advisory_blocked": hard,
+            "stopped_due_to_advisory_blocked": False,
             "steps": [],
             "error": err,
         }
@@ -206,18 +250,45 @@ def assign_named_sequence(
     succeeded_count = 0
     failed_count = 0
     cont = bool(continue_on_failure)
+    stopped_due_to_advisory_blocked = False
 
     for idx, step in enumerate(steps):
         rid = str(step["robot_id"]).strip()
         loc = str(step["location_name"]).strip()
-        leg = assign_named_navigation(
+        alt_raw = step.get("alternate_location_name")
+        alt = (
+            str(alt_raw).strip()
+            if isinstance(alt_raw, str) and str(alt_raw).strip()
+            else ""
+        )
+
+        primary = assign_named_navigation(
             rid,
             loc,
             per_goal_timeout_sec=float(per_goal_timeout_sec),
             poll_interval_sec=float(poll_interval_sec),
             bridge_node_name=bridge_node_name,
         )
-        oc = str(leg.get("outcome", "")).lower()
+        alternate_attempted = False
+        alternate_leg: Optional[Dict[str, Any]] = None
+        effective = primary
+        if (
+            str(primary.get("outcome", "")).lower() != "succeeded"
+            and primary.get("navigate_failure_kind")
+            == NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE
+            and alt
+        ):
+            alternate_attempted = True
+            alternate_leg = assign_named_navigation(
+                rid,
+                alt,
+                per_goal_timeout_sec=float(per_goal_timeout_sec),
+                poll_interval_sec=float(poll_interval_sec),
+                bridge_node_name=bridge_node_name,
+            )
+            effective = alternate_leg
+
+        oc = str(effective.get("outcome", "")).lower()
         step_ok = oc == "succeeded"
         if step_ok:
             succeeded_count += 1
@@ -226,21 +297,35 @@ def assign_named_sequence(
             failed_count += 1
             step_outcome = "failed"
 
-        out_steps.append(
-            {
-                "index": idx,
-                "robot_id": rid,
-                "location_name": loc,
-                "result": leg,
-                "step_outcome": step_outcome,
-            }
-        )
+        rec: Dict[str, Any] = {
+            "index": idx,
+            "robot_id": rid,
+            "location_name": loc,
+            "result": effective,
+            "step_outcome": step_outcome,
+        }
+        if alt:
+            rec["alternate_location_name"] = alt
+            rec["primary_result"] = primary
+            rec["alternate_attempted"] = alternate_attempted
+            rec["alternate_result"] = alternate_leg
+        out_steps.append(rec)
 
         if not step_ok and not cont:
             break
+        if (
+            not step_ok
+            and hard
+            and effective.get("navigate_failure_kind")
+            == NAVIGATE_FAILURE_KIND_ADVISORY_BLOCKED_PASSAGE
+        ):
+            stopped_due_to_advisory_blocked = True
+            break
 
     steps_run = len(out_steps)
-    stopped_early = steps_run < total and not cont and failed_count > 0
+    stopped_early = steps_run < total and failed_count > 0 and (
+        not cont or stopped_due_to_advisory_blocked
+    )
     overall = (
         "success"
         if failed_count == 0 and steps_run == total
@@ -255,6 +340,8 @@ def assign_named_sequence(
         "failed_count": failed_count,
         "stopped_early": stopped_early,
         "continue_on_failure": cont,
+        "hard_stop_on_advisory_blocked": hard,
+        "stopped_due_to_advisory_blocked": stopped_due_to_advisory_blocked,
         "steps": out_steps,
     }
 
@@ -392,7 +479,8 @@ def normalize_team_named_mission_spec(
             "steps": [],
             "error": "steps must be a list",
         }
-    norm_steps: List[Dict[str, str]] = []
+    allowed = build_default_policy_config().allowed_locations
+    norm_steps: List[Dict[str, Any]] = []
     for i, raw in enumerate(steps):
         if not isinstance(raw, dict):
             return {
@@ -419,7 +507,38 @@ def normalize_team_named_mission_spec(
                 "steps": [],
                 "error": f"step {i} has empty location_name",
             }
-        norm_steps.append({"robot_id": rs, "location_name": ls})
+        entry: Dict[str, Any] = {"robot_id": rs, "location_name": ls}
+        alt_raw = raw.get("alternate_location_name", None)
+        if alt_raw is not None:
+            if not isinstance(alt_raw, str):
+                return {
+                    "ok": False,
+                    "mode": m,
+                    "steps": [],
+                    "error": f"step {i} alternate_location_name must be a string",
+                }
+            a = alt_raw.strip()
+            if a:
+                if a == ls:
+                    return {
+                        "ok": False,
+                        "mode": m,
+                        "steps": [],
+                        "error": (
+                            f"step {i} alternate_location_name must differ from location_name"
+                        ),
+                    }
+                if a not in allowed:
+                    return {
+                        "ok": False,
+                        "mode": m,
+                        "steps": [],
+                        "error": (
+                            f"step {i} alternate_location_name {a!r} is not permitted"
+                        ),
+                    }
+                entry["alternate_location_name"] = a
+        norm_steps.append(entry)
     return {
         "ok": True,
         "mode": m,
@@ -464,6 +583,7 @@ def validate_team_named_mission_spec_contract(spec: Any) -> Dict[str, Any]:
     if "options" in spec and not isinstance(spec["options"], dict):
         errors.append("options must be a dict when present")
 
+    allowed_loc = build_default_policy_config().allowed_locations
     if isinstance(steps_raw, list):
         seen_parallel: set[str] = set()
         for i, raw_step in enumerate(steps_raw):
@@ -478,6 +598,21 @@ def validate_team_named_mission_spec_contract(spec: Any) -> Dict[str, Any]:
                 errors.append(f"step {i} has empty robot_id")
             if not ls:
                 errors.append(f"step {i} has empty location_name")
+            alt_raw = raw_step.get("alternate_location_name", None)
+            if alt_raw is not None:
+                if not isinstance(alt_raw, str):
+                    errors.append(f"step {i} alternate_location_name must be a string")
+                else:
+                    a = alt_raw.strip()
+                    if a:
+                        if a == ls:
+                            errors.append(
+                                f"step {i} alternate_location_name must differ from location_name"
+                            )
+                        elif a not in allowed_loc:
+                            errors.append(
+                                f"step {i} alternate_location_name {a!r} is not permitted"
+                            )
             if mnorm == "parallel" and rs:
                 if rs in seen_parallel:
                     errors.append("duplicate robot_id in parallel spec")
@@ -536,6 +671,7 @@ def assign_team_named_mission(
     per_goal_timeout_sec: float = 120.0,
     poll_interval_sec: float = 1.0,
     continue_on_failure: bool = False,
+    hard_stop_on_advisory_blocked: bool = False,
     max_workers: int | None = None,
     bridge_node_name: str = "mission_bridge_node",
 ) -> Dict[str, Any]:
@@ -557,6 +693,7 @@ def assign_team_named_mission(
             per_goal_timeout_sec=float(per_goal_timeout_sec),
             poll_interval_sec=float(poll_interval_sec),
             continue_on_failure=bool(continue_on_failure),
+            hard_stop_on_advisory_blocked=bool(hard_stop_on_advisory_blocked),
             bridge_node_name=bridge_node_name,
         )
         label = "sequence"
@@ -600,6 +737,7 @@ def run_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
         "per_goal_timeout_sec",
         "poll_interval_sec",
         "continue_on_failure",
+        "hard_stop_on_advisory_blocked",
         "max_workers",
         "bridge_node_name",
     )
@@ -610,6 +748,7 @@ def run_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
         per_goal_timeout_sec=float(opts.get("per_goal_timeout_sec", 120.0)),
         poll_interval_sec=float(opts.get("poll_interval_sec", 1.0)),
         continue_on_failure=bool(opts.get("continue_on_failure", False)),
+        hard_stop_on_advisory_blocked=bool(opts.get("hard_stop_on_advisory_blocked", False)),
         max_workers=opts.get("max_workers"),
         bridge_node_name=str(opts.get("bridge_node_name", "mission_bridge_node")),
     )
@@ -1062,6 +1201,7 @@ def preflight_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
             "per_goal_timeout_sec",
             "poll_interval_sec",
             "continue_on_failure",
+            "hard_stop_on_advisory_blocked",
             "max_workers",
             "bridge_node_name",
         )
@@ -1070,6 +1210,9 @@ def preflight_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
             "per_goal_timeout_sec": picked.get("per_goal_timeout_sec", 120.0),
             "poll_interval_sec": picked.get("poll_interval_sec", 1.0),
             "continue_on_failure": picked.get("continue_on_failure", False),
+            "hard_stop_on_advisory_blocked": bool(
+                picked.get("hard_stop_on_advisory_blocked", False)
+            ),
             "max_workers": picked.get("max_workers"),
             "bridge_node_name": picked.get("bridge_node_name", "mission_bridge_node"),
         }
@@ -1266,6 +1409,8 @@ def preview_team_named_mission_spec(spec: Any) -> Dict[str, Any]:
     else:
         cof = bool(opts.get("continue_on_failure", False))
         lines.append(f"Continue on failure: {str(cof).lower()}")
+        hs = bool(opts.get("hard_stop_on_advisory_blocked", False))
+        lines.append(f"Hard stop on advisory blocked: {str(hs).lower()}")
         msg = "Preview generated for sequence mission."
 
     return {
