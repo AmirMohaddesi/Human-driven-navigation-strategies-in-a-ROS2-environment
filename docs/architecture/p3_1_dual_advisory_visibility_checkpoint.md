@@ -54,5 +54,6 @@ python3 -m pytest tests/test_p3_1_dual_advisory_visibility_ros.py -q --tb=short
 
 ## Related
 
+- [p3_4_dual_advisory_visibility_interpretation_cheatsheet.md](p3_4_dual_advisory_visibility_interpretation_cheatsheet.md)
 - [p1_1_headless_dual_advisory_bridge_demo_checkpoint.md](p1_1_headless_dual_advisory_bridge_demo_checkpoint.md)
 - [p2_5_reviewer_ready_replay_bundle_closure.md](p2_5_reviewer_ready_replay_bundle_closure.md) (offline P2; contrast only)

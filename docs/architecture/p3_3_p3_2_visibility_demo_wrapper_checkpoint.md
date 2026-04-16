@@ -67,6 +67,7 @@ python3 -m pytest tests/test_p3_3_operator_p3_2_visibility_demo_dry_run.py -q --
 
 ## Related
 
+- [p3_4_dual_advisory_visibility_interpretation_cheatsheet.md](p3_4_dual_advisory_visibility_interpretation_cheatsheet.md)
 - [p3_2_dual_advisory_visibility_checkpoint.md](p3_2_dual_advisory_visibility_checkpoint.md)
 - [p3_1_dual_advisory_visibility_checkpoint.md](p3_1_dual_advisory_visibility_checkpoint.md)
 - [p1_1_headless_dual_advisory_bridge_demo_checkpoint.md](p1_1_headless_dual_advisory_bridge_demo_checkpoint.md)
