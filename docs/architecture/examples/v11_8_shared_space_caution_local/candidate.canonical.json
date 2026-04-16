@@ -1,0 +1,8 @@
+{
+  "caution_class": "pedestrian_activity",
+  "confidence": 0.7,
+  "location_ref": "base",
+  "sensor_class": "pedestrian_proxy",
+  "source_robot_id": "robot1",
+  "ttl_sec": 120.0
+}

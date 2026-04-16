@@ -1,0 +1,16 @@
+{
+  "belief_id": "123e4567-e89b-42d3-a456-426614174000",
+  "caution_class": "pedestrian_activity",
+  "confidence": 0.7,
+  "fact_type": "shared_space_caution",
+  "location_ref": "base",
+  "provenance": {
+    "observation_id": "223e4567-e89b-42d3-a456-426614174111",
+    "sensor_class": "pedestrian_proxy"
+  },
+  "schema_version": "v11.1",
+  "source_robot_id": "robot1",
+  "timestamp_utc": "2026-04-08T12:30:30Z",
+  "ttl_sec": 120.0,
+  "verification_status": "unverified"
+}

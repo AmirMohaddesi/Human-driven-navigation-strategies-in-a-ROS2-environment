@@ -1,0 +1,18 @@
+{
+  "active_belief_ids": [
+    "123e4567-e89b-42d3-a456-426614174000"
+  ],
+  "entries": [
+    {
+      "belief_id": "123e4567-e89b-42d3-a456-426614174000",
+      "caution_class": "pedestrian_activity",
+      "confidence": 0.7,
+      "source_robot_id": "robot1",
+      "timestamp_utc": "2026-04-08T12:30:30Z"
+    }
+  ],
+  "fact_type": "shared_space_caution",
+  "has_active": true,
+  "location_ref": "base",
+  "schema_version": "v11.4.advisory.1"
+}

@@ -1,0 +1,254 @@
+{
+  "schema_version": "v11.1.fixture.1",
+  "fact_schema_version": "v11.1",
+  "fact_type": "shared_space_caution",
+  "allowed_caution_class": [
+    "pedestrian_activity",
+    "manual_handling",
+    "maintenance_presence"
+  ],
+  "cases": [
+    {
+      "case_id": "accept_minimal_valid",
+      "expect": "accept",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "123e4567-e89b-42d3-a456-426614174000",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "223e4567-e89b-42d3-a456-426614174111"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity"
+      }
+    },
+    {
+      "case_id": "reject_wrong_fact_type_blocked",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "323e4567-e89b-42d3-a456-426614174222",
+        "fact_type": "blocked_passage",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "423e4567-e89b-42d3-a456-426614174333"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity"
+      }
+    },
+    {
+      "case_id": "reject_wrong_fact_type_degraded",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "523e4567-e89b-42d3-a456-426614174444",
+        "fact_type": "degraded_passage",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "623e4567-e89b-42d3-a456-426614174555"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity"
+      }
+    },
+    {
+      "case_id": "reject_wrong_schema_version",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v8.1",
+        "belief_id": "723e4567-e89b-42d3-a456-426614174666",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "823e4567-e89b-42d3-a456-426614174777"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity"
+      }
+    },
+    {
+      "case_id": "reject_extra_top_level_speed_field",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "923e4567-e89b-42d3-a456-426614174888",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "a23e4567-e89b-42d3-a456-426614174999"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity",
+        "recommended_speed_factor": 0.5
+      }
+    },
+    {
+      "case_id": "reject_unknown_caution_class",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "b23e4567-e89b-42d3-a456-426614174aaa",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.7,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "c23e4567-e89b-42d3-a456-426614174bbb"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "caution_class": "slow_zone"
+      }
+    },
+    {
+      "case_id": "reject_confidence_above_one",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "d23e4567-e89b-42d3-a456-426614174ccc",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 1.01,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "e23e4567-e89b-42d3-a456-426614174ddd"
+        },
+        "ttl_sec": 120.0,
+        "verification_status": "unverified",
+        "caution_class": "manual_handling"
+      }
+    },
+    {
+      "case_id": "reject_ttl_zero",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "f23e4567-e89b-42d3-a456-426614174eee",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.5,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "023e4567-e89b-42d3-a456-426614174fff"
+        },
+        "ttl_sec": 0.0,
+        "verification_status": "unverified",
+        "caution_class": "maintenance_presence"
+      }
+    },
+    {
+      "case_id": "reject_verification_status_not_unverified",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "133e4567-e89b-42d3-a456-426614174000",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.5,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "233e4567-e89b-42d3-a456-426614174111"
+        },
+        "ttl_sec": 60.0,
+        "verification_status": "verified",
+        "caution_class": "maintenance_presence"
+      }
+    },
+    {
+      "case_id": "reject_malformed_belief_id",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "not-a-uuid-v4",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.5,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "333e4567-e89b-42d3-a456-426614174222"
+        },
+        "ttl_sec": 60.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity"
+      }
+    },
+    {
+      "case_id": "reject_extra_provenance_key",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "433e4567-e89b-42d3-a456-426614174333",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08T12:30:00Z",
+        "confidence": 0.5,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "533e4567-e89b-42d3-a456-426614174444",
+          "extra": "x"
+        },
+        "ttl_sec": 60.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity"
+      }
+    },
+    {
+      "case_id": "reject_timestamp_non_rfc3339_fixture_subset",
+      "expect": "reject",
+      "record": {
+        "schema_version": "v11.1",
+        "belief_id": "633e4567-e89b-42d3-a456-426614174555",
+        "fact_type": "shared_space_caution",
+        "source_robot_id": "robot1",
+        "timestamp_utc": "2026-04-08",
+        "confidence": 0.5,
+        "location_ref": "base",
+        "provenance": {
+          "sensor_class": "pedestrian_proxy",
+          "observation_id": "733e4567-e89b-42d3-a456-426614174666"
+        },
+        "ttl_sec": 60.0,
+        "verification_status": "unverified",
+        "caution_class": "pedestrian_activity"
+      }
+    }
+  ]
+}
