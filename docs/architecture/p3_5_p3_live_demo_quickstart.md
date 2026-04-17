@@ -5,6 +5,30 @@
 - ROS 2 workspace built: `colcon build --symlink-install` from the repo root.
 - Shell: `source install/setup.bash` in every terminal below.
 
+## Demo surfaces now (bounded)
+
+- **Integrated simulation surface**
+  - Command: `ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py`
+  - Proves: project-native Gazebo + multi-robot runtime stack bringup.
+  - Does not prove: mission authorization or seam-origin advisory by itself.
+
+- **P3 manual advisory visibility surface**
+  - Commands:
+    - `ros2 launch multi_robot_mission_stack p3_2_dual_advisory_visibility.launch.py`
+    - `./scripts/p3_3_operator_p3_2_visibility_demo.sh`
+  - Proves: visibility lane behavior for valid blocked/degraded payloads and malformed blocked payload resilience.
+  - Does not prove: runtime-grounded seam origin (uses manual publishes).
+
+- **R1 runtime-grounded advisory surface**
+  - Commands:
+    - `ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py`
+    - `ros2 launch multi_robot_mission_stack r1_tf_spatial_advisory_visibility.launch.py`
+  - Proves: accepted R1 TF-distance seam emits degraded advisories into existing P3 degraded lane.
+  - Proof markers:
+    - seam log: `R1 TF seam emitted degraded advisory`
+    - board marker: `location_ref='tf:/robot1_ns/tf<->/robot2_ns/tf:dist<=...'`
+  - Does not prove: control authority, coordinator actioning, or multi-source fusion.
+
 ## Fastest live path (P3.2 + P3.3)
 
 **Terminal 1 — board + bridge**
