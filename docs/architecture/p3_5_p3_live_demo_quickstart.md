@@ -32,6 +32,7 @@
 ## 3-7 minute live walkthrough (presenter script)
 
 Use this sequence to demo the current branch quickly with clear boundaries.
+If short on time, run **Phase 1 + Phase 3** only (skip Phase 2).
 
 ### Phase 1 — Integrated simulation
 
