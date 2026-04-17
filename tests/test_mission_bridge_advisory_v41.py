@@ -110,6 +110,46 @@ def test_v41_bridge_blocks_named_location_after_transport_ingest(ros_init) -> No
         pub_node.destroy_node()
 
 
+def test_v41_bridge_malformed_blocked_transport_survives_then_valid_ingests(ros_init) -> None:
+    """P3 demo Step C: invalid JSON on advisory topic must not kill the bridge process."""
+    bridge = MissionBridgeNode(
+        parameter_overrides=[
+            Parameter(
+                "advisory_blocked_passage_transport_topic",
+                Parameter.Type.STRING,
+                TOPIC,
+            ),
+            Parameter(
+                "advisory_blocked_passage_allowed_source_robot_ids",
+                Parameter.Type.STRING_ARRAY,
+                ["robot1"],
+            ),
+        ],
+    )
+    pub_node = rclpy.create_node("v41_pub_mal_" + uuid.uuid4().hex[:8])
+    ex = MultiThreadedExecutor(num_threads=4)
+    ex.add_node(bridge)
+    ex.add_node(pub_node)
+    try:
+        pub = pub_node.create_publisher(String, TOPIC, 10)
+        bad = String()
+        bad.data = "{not-json"
+        pub.publish(bad)
+        _spin_both(ex, 30)
+        msg = String()
+        msg.data = encode_blocked_passage_record_json(_valid_record(location="base"))
+        pub.publish(msg)
+        _spin_both(ex, 40)
+        out = bridge.navigate_to_named_location("robot1", "base")
+        assert out["status"] == "failed"
+        assert out["message"] == "navigation target blocked by peer belief"
+    finally:
+        ex.remove_node(bridge)
+        ex.remove_node(pub_node)
+        bridge.destroy_node()
+        pub_node.destroy_node()
+
+
 def test_v41_bridge_different_location_not_blocked_then_nav2_path(ros_init) -> None:
     bridge = MissionBridgeNode(
         parameter_overrides=[

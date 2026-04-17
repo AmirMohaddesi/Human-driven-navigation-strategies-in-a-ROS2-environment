@@ -126,9 +126,17 @@ class MissionBridgeNode(Node):
         now = self.get_clock().now()
         ns = int(now.nanoseconds)
         now_utc = datetime.fromtimestamp(ns / 1e9, tz=timezone.utc)
-        res = ingest_blocked_passage_transport_payload(
-            self._advisory_store, msg.data, now_utc=now_utc
-        )
+        try:
+            res = ingest_blocked_passage_transport_payload(
+                self._advisory_store, msg.data, now_utc=now_utc
+            )
+        except ValueError as exc:
+            # Malformed JSON / non-object payload on the wire: visibility surfaces may still show it;
+            # the bridge must not crash (no ingest, no store change).
+            self.get_logger().warning(
+                "advisory blocked_passage transport payload not ingestible (ignored): %s" % (exc,)
+            )
+            return
         if res.stored:
             self.get_logger().info("advisory blocked_passage ingested at bridge")
         elif res.duplicate_ignored:
