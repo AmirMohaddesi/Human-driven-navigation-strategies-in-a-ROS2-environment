@@ -27,6 +27,36 @@ Press Enter when prompted (after Terminal 1 is running).
 
 **What you should see:** `[P3.2_BOARD]`, `[P3.2_ROW]`, `[P3.2_EVT]` lines on Terminal 1 as messages arrive.
 
+## R1 accepted seam proof (clean, no manual degraded publish)
+
+Use this when you need to prove seam-origin degraded traffic from runtime TF data only.
+
+Terminal 1:
+
+```bash
+cd /home/amix/HDNS
+bash scripts/cleanup_baseline_runtime.sh pre
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+export TURTLEBOT3_MODEL=waffle
+ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
+```
+
+Terminal 2:
+
+```bash
+cd /home/amix/HDNS
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch multi_robot_mission_stack r1_tf_spatial_advisory_visibility.launch.py
+```
+
+Proof markers:
+
+- seam log includes `R1 TF seam emitted degraded advisory`
+- degraded board row/event includes `location_ref='tf:/robot1_ns/tf<->/robot2_ns/tf:dist<=...'`
+- this run intentionally excludes the P3.3 wrapper degraded publish step
+
 ## Demo evidence — successful operator run (checklist)
 
 Use this to confirm the same bounded sequence you expect after a good run.
