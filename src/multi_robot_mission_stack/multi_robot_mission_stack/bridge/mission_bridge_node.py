@@ -717,10 +717,19 @@ def main(args=None) -> None:
             )
 
         executor.spin()
+    except KeyboardInterrupt:
+        pass
     finally:
-        executor.remove_node(node)
-        node.destroy_node()
-        rclpy.shutdown()
+        try:
+            executor.remove_node(node)
+        except Exception:
+            pass
+        try:
+            node.destroy_node()
+        except Exception:
+            pass
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
