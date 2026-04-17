@@ -29,6 +29,104 @@
     - board marker: `location_ref='tf:/robot1_ns/tf<->/robot2_ns/tf:dist<=...'`
   - Does not prove: control authority, coordinator actioning, or multi-source fusion.
 
+## 3-7 minute live walkthrough (presenter script)
+
+Use this sequence to demo the current branch quickly with clear boundaries.
+
+### Phase 1 — Integrated simulation
+
+Commands (Terminal A):
+
+```bash
+cd /home/amix/HDNS
+bash scripts/cleanup_baseline_runtime.sh pre
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+export TURTLEBOT3_MODEL=waffle
+ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py
+```
+
+Audience should notice:
+
+- Gazebo opens with house world and two robots.
+- Runtime stack processes come up (Nav2/SLAM/RViz surfaces).
+
+Presenter narration (say 1-3 lines):
+
+- "This is the project-native integrated bringup, not a toy launch."
+- "We can see robots and runtime processes are alive before any advisory demo."
+
+Boundary / non-claim:
+
+- This phase proves integrated runtime bringup only; it does not prove advisory seam origin or control authority.
+
+### Phase 2 — P3 manual advisory visibility demo
+
+Commands (Terminal B, then C):
+
+```bash
+cd /home/amix/HDNS
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch multi_robot_mission_stack p3_2_dual_advisory_visibility.launch.py
+```
+
+```bash
+cd /home/amix/HDNS
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+./scripts/p3_3_operator_p3_2_visibility_demo.sh
+```
+
+Audience should notice:
+
+- `[P3.2_ROW] lane=blocked ... status=VALID` after blocked step.
+- `[P3.2_ROW] lane=degraded ... status=VALID` after degraded step.
+- `[P3.2_EVT] ... status=UNPARSEABLE_JSON` after malformed step, with board still alive.
+
+Presenter narration (say 1-3 lines):
+
+- "This path shows visibility behavior and resilience on advisory transport."
+- "Valid payloads are surfaced, malformed payloads are contained, and observers stay up."
+
+Boundary / non-claim:
+
+- This phase uses manual publishes; it proves visibility and robustness, not runtime-grounded seam origin or mission authority.
+
+### Phase 3 — R1 runtime-grounded advisory seam
+
+Commands (Terminal B, clean run without wrapper):
+
+```bash
+cd /home/amix/HDNS
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch multi_robot_mission_stack r1_tf_spatial_advisory_visibility.launch.py
+```
+
+Optional capture (Terminal C):
+
+```bash
+cd /home/amix/HDNS
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 topic echo /semantic/degraded_passage_p1_1 --once
+```
+
+Audience should notice:
+
+- Seam log: `R1 TF seam emitted degraded advisory`.
+- Board marker: `location_ref='tf:/robot1_ns/tf<->/robot2_ns/tf:dist<=...'`.
+
+Presenter narration (say 1-3 lines):
+
+- "Now the degraded advisory is runtime-grounded from TF robot-to-robot distance."
+- "It reuses the same P3 visibility lane, but source is live runtime, not manual publish."
+
+Boundary / non-claim:
+
+- This phase proves a bounded advisory-only seam; it does not authorize planner/coordinator control or multi-source semantic fusion.
+
 ## Fastest live path (P3.2 + P3.3)
 
 **Terminal 1 — board + bridge**
