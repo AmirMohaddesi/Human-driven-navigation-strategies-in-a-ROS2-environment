@@ -8,7 +8,8 @@
 ## Demo surfaces now (bounded)
 
 - **Integrated simulation surface**
-  - Command: `ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py`
+  - Command: `ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py` (alias: `runtime_stack.launch.py profile:=full_demo`)
+  - Lighter stack without merge/RViz: e.g. `ros2 launch multi_robot_mission_stack runtime_stack.launch.py profile:=sim_nav_bridge`
   - Proves: project-native Gazebo + multi-robot runtime stack bringup.
   - Does not prove: mission authorization or seam-origin advisory by itself.
 
@@ -21,12 +22,15 @@
 
 - **R1 runtime-grounded advisory surface**
   - Commands:
-    - `ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py`
-    - `ros2 launch multi_robot_mission_stack r1_tf_spatial_advisory_visibility.launch.py`
+    - `ros2 launch multi_robot_mission_stack fully_integrated_swarm.launch.py` then `ros2 launch multi_robot_mission_stack r1_tf_spatial_advisory_visibility.launch.py` (overlay uses **board only** — no duplicate bridge)
+    - Or one process: `ros2 launch multi_robot_mission_stack runtime_stack.launch.py profile:=sim_nav_bridge_r1`
   - Proves: accepted R1 TF-distance seam emits degraded advisories into existing P3 degraded lane.
   - Proof markers:
     - seam log: `R1 TF seam emitted degraded advisory`
     - board marker: `location_ref='tf:/robot1_ns/tf<->/robot2_ns/tf:dist<=...'`
+    - R2 visual marker log: `R2 visual marker emitted from R1 degraded advisory`
+    - RViz topic (merge RViz): `/semantic/r2/degraded_marker`
+    - R3 local hold logs: `R3 hold armed from R1 degraded advisory` then `R3 hold released`
   - Does not prove: control authority, coordinator actioning, or multi-source fusion.
 
 ## 3-7 minute live walkthrough (presenter script)

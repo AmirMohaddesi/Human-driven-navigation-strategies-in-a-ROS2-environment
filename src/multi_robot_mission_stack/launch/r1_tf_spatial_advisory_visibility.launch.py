@@ -1,7 +1,11 @@
 """
-R1 showcase helper: runtime TF seam + existing P3.2 visibility path.
+R1 showcase helper: runtime TF seam + P3.2 board + R2 marker + R3 local hold (no second mission_bridge_node).
 
-Use alongside fully_integrated_swarm.launch.py where robot TF is available.
+Use alongside ``runtime_stack`` / ``fully_integrated_swarm`` where robot TF is available.
+
+For a **single-process** R1/R2/R3 demo (bridge + board + R1 + R2 marker + R3 hold, one bridge), use::
+
+    ros2 launch multi_robot_mission_stack runtime_stack.launch.py profile:=sim_nav_bridge_r1
 """
 
 import os
@@ -15,10 +19,11 @@ from launch_ros.actions import Node
 
 def generate_launch_description() -> LaunchDescription:
     mission_stack_pkg_dir = get_package_share_directory("multi_robot_mission_stack")
-    p32 = IncludeLaunchDescription(
+    p32_board_only = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(mission_stack_pkg_dir, "launch", "p3_2_dual_advisory_visibility.launch.py")
-        )
+        ),
+        launch_arguments={"launch_bridge": "false"}.items(),
     )
 
     seam = Node(
@@ -39,6 +44,18 @@ def generate_launch_description() -> LaunchDescription:
             }
         ],
     )
+    r2_marker = Node(
+        package="multi_robot_mission_stack",
+        executable="r2-degraded-visual-marker",
+        name="r2_degraded_visual_marker",
+        output="screen",
+    )
+    r3_hold = Node(
+        package="multi_robot_mission_stack",
+        executable="r3-local-hold-from-r1",
+        name="r3_local_hold_from_r1",
+        output="screen",
+    )
 
-    return LaunchDescription([p32, seam])
+    return LaunchDescription([p32_board_only, seam, r2_marker, r3_hold])
 

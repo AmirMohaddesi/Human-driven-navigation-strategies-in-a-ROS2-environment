@@ -85,6 +85,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /robot1_ns/survey_markers
       Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: R2DegradedMarker
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /semantic/r2/degraded_marker
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

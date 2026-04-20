@@ -62,6 +62,8 @@ setup(
             'semantic-production-handoff-v35 = multi_robot_mission_stack.demo.semantic_production_handoff_node_v35:main',
             'advisory-seam-witness-v39 = multi_robot_mission_stack.demo.advisory_seam_witness_node_v39:main',
             'spatial-advisory-tf-observer-r1 = multi_robot_mission_stack.runtime.spatial_advisory_tf_observer_r1:main',
+            'r2-degraded-visual-marker = multi_robot_mission_stack.runtime.r2_degraded_visual_marker:main',
+            'r3-local-hold-from-r1 = multi_robot_mission_stack.runtime.r3_local_hold_from_r1:main',
             'p3_1_dual_advisory_visibility = multi_robot_mission_stack.visibility.p3_1_dual_advisory_visibility_node:main',
             'p3_2_dual_advisory_board = multi_robot_mission_stack.visibility.p3_2_dual_advisory_board_node:main',
         ],
